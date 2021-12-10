@@ -18,4 +18,22 @@ from django.urls import path
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    # 检测到变化git，使用pycharm自带的工具 ctrl+k 来进行git add 操作和 git commit操作
 ]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
