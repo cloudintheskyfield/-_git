@@ -37,6 +37,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # 会在默认的BASE_DIR下寻找（当前目录，不会去目录里面查找）----->去apps下面寻找
+    'apps.users',
+    # 第二种导入方法----book.apps.BookConfig------>改配置文件users下的apps---->不推荐使用
+
 ]
 
 MIDDLEWARE = [
