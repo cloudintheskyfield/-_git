@@ -128,3 +128,26 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# 配置django-redis
+CACHES = {
+    'default': {       # 0号库存默认数据
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/0',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient'
+        }
+    },
+    'session': {        # 1号库存session数据
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/1',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient'
+        }
+    }
+}
+# 将session的引擎设置为cache
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+# 将session保存到redis中
+SESSION_CACHE_ALIAS = 'default'
+
