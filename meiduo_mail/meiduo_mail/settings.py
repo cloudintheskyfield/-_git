@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-si05!on==jag)1o0)tsca6n)hxrp#ev=fjv1&)b=nrbp@fclk-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['www.meiduo.site', '127.0.0.1']
 
 
 # Application definition
@@ -180,7 +180,7 @@ LOGGING = {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(BASE_DIR, 'logs/meiduo.log'),   # 日志文件的位置
-            'maxBytes': 300 * 1024 * 1024,      
+            'maxBytes': 300 * 1024 * 1024,
             'backupCount': 10,          # 备份
             'formatter': 'verbose'
         },
