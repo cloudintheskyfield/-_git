@@ -15,7 +15,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.http import HttpResponse
-from django.urls import path
+from django.urls import path, include
+
 
 def log(request):
     # 日志器的使用
@@ -37,6 +38,8 @@ urlpatterns = [
     # 进行push ： ctrl + shift + k 进行git push操作
     path('log/', log),
 
+    #   导入users子应用的路由
+    path('', include('apps.users.urls'))
 ]
 
 

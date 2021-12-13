@@ -55,10 +55,14 @@ var vm = new Vue({
             // 检查重名
             if (this.error_name == false) {
                 var url = this.host + '/usernames/' + this.username + '/count/';
+                // axios 类似于 ajax.$get(url, success{}, failer{})
+                // vue 不支持发送ajax请求
+                // 需要借助axios
                 axios.get(url, {
                     responseType: 'json',
                     withCredentials:true,
                 })
+                    // 如果成功执行
                     .then(response => {
                         if (response.data.count > 0) {
                             this.error_name_message = '用户名已存在';
@@ -67,6 +71,7 @@ var vm = new Vue({
                             this.error_name = false;
                         }
                     })
+                    // 如果失败
                     .catch(error => {
                         console.log(error.response);
                     })
