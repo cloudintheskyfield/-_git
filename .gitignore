@@ -128,5 +128,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# pycharm .idea
+# -------->pycharm .idea | migrations
 meiduo_mail/.idea/*
+meiduo_mail/apps/users/migrations/*
