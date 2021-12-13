@@ -1,3 +1,5 @@
+import re
+
 from django.http import JsonResponse
 from django.shortcuts import render
 
@@ -32,8 +34,12 @@ from apps.users.models import User
 
 
 class UsernameCountView(View):
+    """需要继承自View类"""
     def get(self, request, username):
-        # 1.接收用户名
+        """处理所有的get请求"""
+        # 1.接收用户名 对用户名的输入进行一下判断
+        # if not re.match('[a-zA-Z0-9_-]{5,20}', username):
+        #     return JsonResponse({'code': 200, 'errmsg': '用户名不满足需求'})
         # 2.根据用户名查询数据
         count = User.objects.filter(username=username).count()  # count()为查询该用户名对应的数量
         # 3.返回响应

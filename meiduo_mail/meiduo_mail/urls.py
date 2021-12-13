@@ -32,6 +32,12 @@ def log(request):
 
     return HttpResponse('log')
 
+# 注册转换器
+from utils.converters import UsernameConverter
+from django.urls import register_converter
+register_converter(UsernameConverter, 'username')   # 后面的使用的名字
+
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     # 检测到变化git，使用pycharm自带的工具 ctrl+k 来进行git add 操作和 git commit操作
