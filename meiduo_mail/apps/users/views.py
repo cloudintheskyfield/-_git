@@ -15,14 +15,14 @@ from apps.users.models import User
 
 """
 判断用户名是否重复的功能：
-    前端（了解）：当用户输入用户名之后，失去焦点，发送一个axiox（ajax）请求
+    前端（了解）：当用户输入用户名之后，失去焦点，发送一个axios（ajax）请求
     后段：
-        1.接收请求：接收用户名
+        1.接收请求：接收用户输入的用户名
         2.业务逻辑：根据用户名查询数据库，如果查询结果等于0，说明没有注册
                 如果查询数量等于1，说明有注册
         3.响应：返回Json数据
                 {code:0, count:0/1, errmsg:ok}      code为0说明没有问题
-                code：状态码  ---  errmsg：错误信息 ---  count：记录该用户名的个数
+                code：状态码为0表示没有问题  ---  errmsg：错误信息 ---  count：记录该用户名的个数
         4.路由：GET方式  usernames/ (?<username>[a-zA-Z0-9_-]{5, 20}/count/
                         usernames/<username>/count/
         5.步骤：
@@ -32,9 +32,10 @@ from apps.users.models import User
         
 """
 
-
+# 固定写法必须继承view
 class UsernameCountView(View):
     """需要继承自View类"""
+    # 固定写法get方法
     def get(self, request, username):
         """处理所有的get请求"""
         # 1.接收用户名 对用户名的输入进行一下判断
@@ -42,7 +43,7 @@ class UsernameCountView(View):
         #     return JsonResponse({'code': 200, 'errmsg': '用户名不满足需求'})
         # 2.根据用户名查询数据
         count = User.objects.filter(username=username).count()  # count()为查询该用户名对应的数量
-        # 3.返回响应
+        # 3.返回响应--->返回json数据--->根据前端js代码来确定使用什么数据进行交互。 其中count必须返回的，code和errmsg返回与否都可
         return JsonResponse({'code': 0, 'count': count, 'errmsg': 'ok'})    # 返回的Json数据一般为字典
 
 

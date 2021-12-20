@@ -28,6 +28,7 @@
                     <ul>
                         <li>
                             <label>用户名:</label>
+                            <!-- @blur事件：当元素失去焦点的时候触发blur事件,触发js中定义的check_username方法-->
                             <input @blur="check_username" v-model="username" type="text" name="username" id="user_name">
                             <span v-show="error_name" class="error_tip">{{ error_name_message }}</span>
                         </li>

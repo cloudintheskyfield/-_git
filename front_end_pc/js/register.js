@@ -42,6 +42,7 @@ var vm = new Vue({
 			// 设置页面中图片验证码img标签的src属性
 			this.image_code_url = this.host + "/image_codes/" + this.image_code_id + "/";
 		},
+
         // 检查用户名
         check_username: function () {
             var re = /^[a-zA-Z0-9_-]{5,20}$/;
@@ -52,18 +53,22 @@ var vm = new Vue({
                 this.error_name_message = '请输入5-20个字符的用户名且不能为纯数字';
                 this.error_name = true;
             }
+
             // 检查重名
             if (this.error_name == false) {
+                // 下面的路由已经写死，后段中也需要这样写
                 var url = this.host + '/usernames/' + this.username + '/count/';
                 // axios 类似于 ajax.$get(url, success{}, failer{})
                 // vue 不支持发送ajax请求
                 // 需要借助axios
                 axios.get(url, {
+                    // 此处为json数据 后端口也应该返回json数据
                     responseType: 'json',
                     withCredentials:true,
                 })
                     // 如果成功执行
                     .then(response => {
+                        // 这里有count，所以后段必须返回count数量，后段中的code这里没有返回与否都可以
                         if (response.data.count > 0) {
                             this.error_name_message = '用户名已存在';
                             this.error_name = true;
