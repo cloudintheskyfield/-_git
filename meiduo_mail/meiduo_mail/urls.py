@@ -33,9 +33,10 @@ def log(request):
     return HttpResponse('log')
 
 # 注册转换器
-from utils.converters import UsernameConverter
-from django.urls import register_converter
-register_converter(UsernameConverter, 'username')   # 后面的使用的名字
+from utils.converters import UsernameConverter  # 1.将UsernameConverter转换器导入
+from django.urls import register_converter  # 2. 再从django.urls中的resister_converter中导入转换器
+# 注册的方式类似源码中标记的 参数1：转换器类，参数2：以及转换器的名字 ----->其中转换器的名字为自定义的，需要在app的对应子应用路由中使用
+register_converter(UsernameConverter, 'username')
 
 
 urlpatterns = [

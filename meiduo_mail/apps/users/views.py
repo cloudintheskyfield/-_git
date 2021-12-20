@@ -38,11 +38,15 @@ class UsernameCountView(View):
     # 固定写法get方法
     def get(self, request, username):
         """处理所有的get请求"""
-        # 1.接收用户名 对用户名的输入进行一下判断
+        # 1.接收用户名 对用户名的输入进行一下判断 判断是否在5-20之间，不符合就没有必要进行数据库的查询
+        #       虽然前端会进行查询判断，但是每一次的数据后段都会进行数据库查询
+        #       在这里写的正则可以验证，但是，每次用的话都要重新复制代码
         # if not re.match('[a-zA-Z0-9_-]{5,20}', username):
         #     return JsonResponse({'code': 200, 'errmsg': '用户名不满足需求'})
+
         # 2.根据用户名查询数据
         count = User.objects.filter(username=username).count()  # count()为查询该用户名对应的数量
+
         # 3.返回响应--->返回json数据--->根据前端js代码来确定使用什么数据进行交互。 其中count必须返回的，code和errmsg返回与否都可
         return JsonResponse({'code': 0, 'count': count, 'errmsg': 'ok'})    # 返回的Json数据一般为字典
 
