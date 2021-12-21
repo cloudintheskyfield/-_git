@@ -99,6 +99,7 @@ var vm = new Vue({
         },
         // 检查手机号
         check_phone: function () {
+            // 此处为正则匹配
             var re = /^1[345789]\d{9}$/;
 
             if (re.test(this.mobile)) {
@@ -108,8 +109,10 @@ var vm = new Vue({
                 this.error_phone = true;
             }
             if (this.error_phone == false) {
+                // 路由为 127.0.0.1:8000/mobiles/phone_number/count/
                 var url = this.host + '/mobiles/' + this.mobile + '/count/';
                 axios.get(url, {
+                    // 此处为json数据
                     responseType: 'json',
                      withCredentials:true,
                 })
@@ -216,6 +219,7 @@ var vm = new Vue({
             // 点击注册按钮之后, 发送请求 (下面的代码是通过请求体传参的)
             if (this.error_name == false && this.error_password == false && this.error_check_password == false
                 && this.error_phone == false && this.error_sms_code == false && this.error_allow == false) {
+                // 以post方式发送 下面发送的数据为在后段接收的数据，所以名字需要对应上
                 axios.post(this.host + '/register/', {
                     username: this.username,
                     password: this.password,
@@ -224,14 +228,17 @@ var vm = new Vue({
                     sms_code: this.sms_code,
                     allow: this.allow
                 }, {
+                    // 定义传递数据类型为json数据
                     responseType: 'json',
                     withCredentials:true,
                 })
+                    // 该处对应后段中的 响应码code 0表示成功 400表示失败
                     .then(response => {
                         if (response.data.code==0) {
                            location.href = 'index.html';
                         }
                         if (response.data.code == 400) {
+                            // 该处的errmsg是在后段中定义的
                             alert(response.data.errmsg)
                         }
                     })
@@ -251,3 +258,13 @@ var vm = new Vue({
         }
     }
 });
+
+
+
+
+
+
+
+
+
+

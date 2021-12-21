@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     # 会在默认的BASE_DIR下寻找（当前目录，不会去目录里面查找）----->去apps下面寻找
     'apps.users',
     # 第二种导入方法----book.apps.BookConfig------>改配置文件users下的apps---->不推荐使用
+
     # 注册django-cors-headers/ CORS
     'corsheaders'
 
@@ -51,7 +52,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -211,7 +212,7 @@ LOGGING = {
 """
 AUTH_USER_MODEL = 'users.User'
 
-"""添加CORS白名单"""
+# """添加CORS白名单"""
 CORS_ORIGIN_WHITELIST = (
     'http://127.0.0.1:8080',
     'http://localhost:8080',
