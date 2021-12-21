@@ -40,6 +40,7 @@ var vm = new Vue({
 			// 生成一个编号 : 严格一点的使用uuid保证编号唯一， 不是很严谨的情况下，也可以使用时间戳
 			this.image_code_id = generateUUID();
 			// 设置页面中图片验证码img标签的src属性
+            // 根据这个定义一个路由 传递一个image_code_id
 			this.image_code_url = this.host + "/image_codes/" + this.image_code_id + "/";
 		},
 
@@ -220,6 +221,9 @@ var vm = new Vue({
             if (this.error_name == false && this.error_password == false && this.error_check_password == false
                 && this.error_phone == false && this.error_sms_code == false && this.error_allow == false) {
                 // 以post方式发送 下面发送的数据为在后段接收的数据，所以名字需要对应上
+
+                // 下面的this.host 为host.js中的host域名，设置cookie的时候需要用域名访问，127.0.0.1拿不到数据
+                // 是对应关系，但是两个不一样
                 axios.post(this.host + '/register/', {
                     username: this.username,
                     password: this.password,

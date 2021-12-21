@@ -132,9 +132,26 @@ class RegisterView(View):
         # User.objects.create(username=username, password=password, mobile=mobile)
         # 以上2中方式中，都可以入库，但是有一个问题？--->密码没有加密
         # 方案3
-        User.objects.create_user(username=username, password=password, mobile=mobile)
+        user = User.objects.create_user(username=username, password=password, mobile=mobile)
+
+        # 设置session信息
+        # request.session['user_id'] = user.id
+        # Django为我们提供了状态保持的方法
+        from django.contrib.auth import login
+        # user为已经登录的用户信息
+        login(request, user)
+
         # 5.返回响应
         return JsonResponse({'code': 0, 'errmsg': 'ok'})
+
+
+"""
+如果需求是注册成功后表示用户认证通过，那么此时可以在注册成功后实现 状态保持（注册成功即已经登录）
+如果需求是注册成功后不表示用户认证通过，那么此时不用在注册成功后实现 状态保持（注册成功，单独登录）
+状态保持的两种实现方式：
+    在客户端存储信息使用Cookie
+    在服务器端存储信息使用Session
+"""
 
 
 
