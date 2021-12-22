@@ -112,10 +112,17 @@ class SmsCodeView(View):
         from random import randint
         sms_code = '%06d' % randint(0, 99999)
 
+        # 4.5 管道--->从性能上提升redis数据库的效率，减少包的数量
+        # 4.5.1新建一个管道
+        pipeline = redis_cli.pipeline()
+
         # 5.保存短信验证码---将短信验证码存储到redis中
-        redis_cli.setex(mobile, 300, sms_code)
+        pipeline.setex(mobile, 300, sms_code)
         # 5.1 添加一个发送标记 有效期60秒 内容是什么都可以
-        redis_cli.setex('send_flag_%s' % mobile, 60, 1)     # 注意send_flag为存入的二进制数据
+        pipeline.setex('send_flag_%s' % mobile, 60, 1)     # 注意send_flag为存入的二进制数据
+
+        # 4.5.2管道执行指令
+        pipeline.execute()
 
         # 6.发送短信验证码
         from libs.yuntongxun.sms import CCP
