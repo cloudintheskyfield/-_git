@@ -13,7 +13,7 @@ class UsernameConverter:
 
 # 判断手机号是否注册的转换器
 class MobileConverter:
-    regex = '1[3,4,5,7,8,9]\d{9}'
+    regex = '1[345789]\d{9}'
 
     def to_python(self, value):
         return value

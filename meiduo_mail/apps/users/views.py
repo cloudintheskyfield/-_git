@@ -2,7 +2,6 @@ import json
 import re
 
 from django.http import JsonResponse
-from django.shortcuts import render
 
 # Create your views here.
 from django.views import View
@@ -84,21 +83,22 @@ class UsernameCountView(View):
 
 
 # 判断手机号是否注册
-# class PhoneNumberCountView(View):
-#     def get(self, request, mobile):
-#         # 1.接收手机号
-#         # 2.根据电话号查询
-#         count = User.objects.filter(mobile=mobile).count()  # 查询手机号对应的数量
-#         # 3.返回
-#         return JsonResponse({'code': 0, 'count': count, 'errmsg': 'set phone is ok'})
+class PhoneNumberCountView(View):
+    def get(self, request, mobile):
+        # 1.接收手机号
+        # 2.根据电话号查询
+        count = User.objects.filter(mobile=mobile).count()  # 查询手机号对应的数量
+        # 3.返回
+        return JsonResponse({'code': 0, 'count': count, 'errmsg': 'set phone is ok'})
+
 
 # 注册视图
 class RegisterView(View):
     def post(self, request):
         # 1.接收请求（POST - --JSON）
-        body_bytes = request.body   # 数据在request.body中
+        body_bytes = request.body  # 数据在request.body中
         body_str = body_bytes.decode()
-        body_dict = json.loads(body_str)    # 注意该处是 loads 不是 load
+        body_dict = json.loads(body_str)  # 注意该处是 loads 不是 load
 
         # 2.获取数据
         # body_dict['username']容易出现异常，如果数据不存在的话，下面的get后面的参数在前端页面中有显示
@@ -107,23 +107,47 @@ class RegisterView(View):
         password2 = body_dict.get('password2')
         mobile = body_dict.get('mobile')
         allow = body_dict.get('allow')
+        # 接收请求中的sms_code
+        sms_code = body_dict.get('sms_code')
 
         # 3.验证数据
         # 3.1 用户名，密码，确认密码，手机号，是否同意协议 都要有
         # all([xxx, xxx]) all中的元素只要是None或False，all就返回False，否则true
         # if username is null:      ---->需要一个一个写很麻烦，使用all的方式
         #      return JsonResponse()
-        if not all([username, password, password2, mobile, allow]):
-            return JsonResponse({'code': 400, 'errmsg': '参数不全'})    # 该处失败状态吗对应前端中的400/0 失败成功
+        if not all([username, password, password2, mobile, sms_code]):
+            return JsonResponse({'code': 400, 'errmsg': '参数不全'})  # 该处失败状态吗对应前端中的400/0 失败成功
         # 3.2  1.用户名满足规则    2.用户名不能重复（必须再验证一次）
         if not re.match('[a-zA-Z_-]{5,20}', username):
             return JsonResponse({'code': 400, 'errmsg': '用户名不满足规则'})
+        if User.objects.filter(username=username):
+            return JsonResponse({'code': 400, 'errmsg': '用户名已存在'})
         # 3.3 密码满足规则
-
+        if (len(password) < 8) or (len(password) > 20):
+            return JsonResponse({'code': 400, 'errmsg': '密码不满足规则'})
         # 3.4 确认密码和密码要一致
+        if password != password2:
+            return JsonResponse({'code': 400, 'errmsg': '密码不一致，请重试'})
         # 3.5 手机号满足规则，手机号也不能重复
-        # 3.6 同意协议
+        if not re.match('1[345789]\d{9}', mobile):
+            return JsonResponse({'code': 400, 'errmsg': '手机号不满足规则'})
 
+        # 3.5.5 判断短信验证码是否正确
+
+        # 获取redis中用户输入的验证码
+        from django_redis import get_redis_connection
+        redis_cli = get_redis_connection('code')
+        sms_code_redis = redis_cli.get(mobile)  # sms_code不为字节类型
+        # 判断过期
+        if not sms_code_redis:
+            return JsonResponse({'code': 400, 'errmsg': '短信验证码已过期'})
+        # 判断用户输入短信是否正确
+        if sms_code != sms_code_redis.decode():
+            return JsonResponse({'code': 400, 'errmsg': '短信验证码不正确'})
+
+        # 3.6 同意协议
+        if allow is False:
+            return JsonResponse({'code': 400, 'errmsg': '未勾选同意条款'})
         # 4 数据入库
         # 方案1
         # user = User(username=username, password=password, mobile=mobile)
@@ -142,7 +166,7 @@ class RegisterView(View):
         login(request, user)
 
         # 5.返回响应
-        return JsonResponse({'code': 0, 'errmsg': 'ok'})
+        return JsonResponse({'code': 0, 'errmsg': 'register is ok'})
 
 
 """
@@ -152,28 +176,3 @@ class RegisterView(View):
     在客户端存储信息使用Cookie
     在服务器端存储信息使用Session
 """
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

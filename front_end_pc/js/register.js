@@ -170,6 +170,7 @@ var vm = new Vue({
             }
 
             // 向后端接口发送请求，让后端发送短信验证码
+            // 该处为前端发起的请求-------路由后面的this.xxx, xxx就是可以向后端请求 请求中的参数
             var url = this.host + '/sms_codes/' + this.mobile + '/' + '?image_code=' + this.image_code
                 + '&image_code_id=' + this.image_code_id
             axios.get(url, {
@@ -177,6 +178,12 @@ var vm = new Vue({
                 withCredentials:true,
             })
                 .then(response => {
+                    // 添加判断 重复 发送短信的判断条件
+                    if(response.data.code==400){
+                        this.error_sms_code = true;
+                        this.error_sms_code_message = response.data.errmsg;
+                        return;
+                    }
                     // 表示后端发送短信成功
                     // 倒计时60秒，60秒后允许用户再次点击发送短信验证码的按钮
                     var num = 60;
