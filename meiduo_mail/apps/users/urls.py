@@ -14,7 +14,7 @@ urlpatterns = [
     path('mobiles/<mobile:mobile>/count/', PhoneNumberCountView.as_view()),
     # http://127.0.0.1:8000/register
     path('register/', RegisterView.as_view()),
-    #
+    # http://127.0.0.1:8000/login/
     path('login/', LoginView.as_view())
 
 ]

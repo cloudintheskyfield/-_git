@@ -2,10 +2,9 @@ import json
 import re
 
 from django.http import JsonResponse
-
 # Create your views here.
 from django.views import View
-from apps.users.models import User
+from apps.users.models import User  # abc
 
 """
 需求分析：根据页面的功能（从上倒下，从左到右面），那些功能需要和后段配合完成
@@ -206,6 +205,7 @@ class LoginView(View):
         password = data.get('password')
         remembered = data.get('remembered')
 
+
         # 2.验证数据
         if not all([username, password]):
             return JsonResponse({'code': 400, 'errmsg': '参数不全'})
@@ -236,11 +236,15 @@ class LoginView(View):
         if remembered is True:
             # 记住登录---记住后直接自动登录，不需要用户再去自行手动设置
             request.session.set_expiry(None)
-            return JsonResponse({'code': 0, 'errmsg': 'ok'})
         elif remembered is False:
             # 不记住登录 浏览器关闭session过期
             request.session.set_expiry(0)
-            return JsonResponse({'code': 0, 'errmsg': 'ok'})
+        # 6.设置cookie 并返回响应
+        response = JsonResponse({'code': 0, 'errmsg': 'ok'})
+        response.set_cookie('username', username)   # 不设置max_age= 默认会话结束之后
+        return response
+
+
 
 
 
