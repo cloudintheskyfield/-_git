@@ -45,6 +45,7 @@ var vm = new Vue({
 
             if (this.error_username == false && this.error_pwd == false) {
                 axios.post(this.host + '/login/', {
+                    // 下面三个为发送的数据, 分号前面的数据
                     username: this.username,
                     password: this.password,
                     remembered:this.remember,

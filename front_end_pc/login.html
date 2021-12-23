@@ -25,6 +25,7 @@
                     <div class="form_input cur">
                      
                         <form id="login-form" @submit.prevent="on_submit">
+                            <!--跳转到js中的on_submit事件-->
                             <input type="text" v-model="username" @blur="check_username" name="" class="name_input" placeholder="请输入用户名或手机号">
                             <div v-show="error_username" class="user_error" v-cloak>请填写用户名或手机号</div>
                             <input type="password" v-model="password" @blur="check_pwd" name="pwd" class="pass_input" placeholder="请输入密码">

@@ -118,7 +118,7 @@ class RegisterView(View):
         if not all([username, password, password2, mobile, sms_code]):
             return JsonResponse({'code': 400, 'errmsg': '参数不全'})  # 该处失败状态吗对应前端中的400/0 失败成功
         # 3.2  1.用户名满足规则    2.用户名不能重复（必须再验证一次）
-        if not re.match('[a-zA-Z_-]{5,20}', username):
+        if not re.match('[a-zA-Z0-9_-]{5,20}', username):
             return JsonResponse({'code': 400, 'errmsg': '用户名不满足规则'})
         if User.objects.filter(username=username):
             return JsonResponse({'code': 400, 'errmsg': '用户名已存在'})
@@ -176,3 +176,82 @@ class RegisterView(View):
     在客户端存储信息使用Cookie
     在服务器端存储信息使用Session
 """
+
+"""
+登录
+
+前端：
+    当用户把用户名和密码输入完成之后，会点击登录摁钮。这个时候前端会发送一个ajax（axios）请求
+    
+后端：
+    请求：接收数据，验证数据
+    业务逻辑：验证用户名和密码是否正确，session（状态保持）
+    响应：返回json数据 0 成功 400 失败
+    
+    POST    /login/
+    
+步骤：
+    1.接收数据
+    2.验证数据
+    3.验证用户名和密码是否正确
+    4.session
+    5.判断是否记住登录
+    6.返回响应
+"""
+class LoginView(View):
+    def post(self, request):
+        # 1.接收数据 接收用户输入的数据
+        data = json.loads(request.body.decode())
+        username = data.get('username')
+        password = data.get('password')
+        remembered = data.get('remembered')
+        # 2.验证数据
+        if not all([username, password]):
+            return JsonResponse({'code': 400, 'errmsg': '参数不全'})
+
+        # 2.5 验证用户名和密码
+
+        # 3.验证用户名和密码是否正确
+        # 方式1
+        # user = User.objects.filter(username=username, password=password)
+        # if not user:
+        #     return JsonResponse({'code': 400, 'errmsg': '用户名或者密码错误'})
+        # 方式2
+        # 系统自带的认证系统
+        from django.contrib.auth import authenticate, login
+        user = authenticate(username=username, password=password)
+        if user is None:
+            return JsonResponse({'code': 400, 'errmsg': '账号或者密码错误'})
+        # 4.session 登录状态保持
+        login(request, user)
+        # 5.判断是否记住登录
+        if remembered is True:
+            # 记住登录---记住后直接自动登录，不需要用户再去自行手动设置
+            request.session.set_expiry(None)
+            return JsonResponse({'code': 0, 'errmsg': 'ok'})
+        elif remembered is False:
+            # 不记住登录 浏览器关闭session过期
+            request.session.set_expiry(0)
+            return JsonResponse({'code': 0, 'errmsg': 'ok'})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
