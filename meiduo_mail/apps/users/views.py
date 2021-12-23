@@ -197,6 +197,8 @@ class RegisterView(View):
     5.判断是否记住登录
     6.返回响应
 """
+
+
 class LoginView(View):
     def post(self, request):
         # 1.接收数据 接收用户输入的数据
@@ -204,7 +206,6 @@ class LoginView(View):
         username = data.get('username')
         password = data.get('password')
         remembered = data.get('remembered')
-
 
         # 2.验证数据
         if not all([username, password]):
@@ -236,34 +237,36 @@ class LoginView(View):
         if remembered is True:
             # 记住登录---记住后直接自动登录，不需要用户再去自行手动设置
             request.session.set_expiry(None)
-        elif remembered is False:
+            response = JsonResponse({'code': 0, 'errmsg': 'set session is ok'})
+        else:
             # 不记住登录 浏览器关闭session过期
             request.session.set_expiry(0)
+            response = JsonResponse({'code': 0, 'errmsg': 'ok'})
         # 6.设置cookie 并返回响应
-        response = JsonResponse({'code': 0, 'errmsg': 'ok'})
-        response.set_cookie('username', username)   # 不设置max_age= 默认会话结束之后
+        # 为了首页显示用户信息-----------------
+        response.set_cookie('username', username)  # 不设置max_age= 默认会话结束之后
         return response
 
 
+"""
+前端：
+    当用户点击退出摁钮的时候，前端发送一个axios delete的请求
+后段：
+    请求
+    业务逻辑    退出
+    响应 发挥JSON数据
+    
+"""
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+class LogoutView(View):
+    # 该处定义名称的时候定义get/ post/ put等等 按照规则
+    # 此处对应前端js中的axios.get 中的get
+    def get(self, request):
+        from django.contrib.auth import logout
+        # 删除session信息
+        logout(request)
+        # 删除cookie信息
+        response = JsonResponse({'code': 0, 'errmsg': 'log out is ok'})
+        response.delete_cookie('username')
+        return response

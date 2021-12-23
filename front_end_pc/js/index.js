@@ -37,7 +37,7 @@ var vm = new Vue({
         // 退出登录按钮
         logoutfunc: function () {
             var url = this.host + '/logout/';
-            axios.delete(url, {
+            axios.get(url, {
                 responseType: 'json',
                 withCredentials:true,
             })
