@@ -205,11 +205,17 @@ class LoginView(View):
         username = data.get('username')
         password = data.get('password')
         remembered = data.get('remembered')
+
         # 2.验证数据
         if not all([username, password]):
             return JsonResponse({'code': 400, 'errmsg': '参数不全'})
 
         # 2.5 验证用户名和密码
+        # 2.5.验证是根据手机号查询还是根据用户名查询   可以根据修改User.USERNAME_FIELD字段来确定是用户名/手机号来进行判断是什么登录
+        if re.match('1[3-9]\d{9}', username):
+            User.USERNAME_FIELD = 'mobile'
+        else:
+            User.USERNAME_FIELD = 'username'
 
         # 3.验证用户名和密码是否正确
         # 方式1
@@ -222,8 +228,10 @@ class LoginView(View):
         user = authenticate(username=username, password=password)
         if user is None:
             return JsonResponse({'code': 400, 'errmsg': '账号或者密码错误'})
+
         # 4.session 登录状态保持
         login(request, user)
+
         # 5.判断是否记住登录
         if remembered is True:
             # 记住登录---记住后直接自动登录，不需要用户再去自行手动设置
