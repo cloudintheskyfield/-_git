@@ -1,4 +1,4 @@
-"""生产者消费者伪代码"""
+"""生产者消费者 伪代码"""
 
 
 class Broker(object):
@@ -39,3 +39,23 @@ app = Celery()
 app.add(send_sms_code)
 # 3.执行任务
 app.work(send_sms_code)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

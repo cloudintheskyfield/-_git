@@ -125,20 +125,19 @@ class SmsCodeView(View):
         pipeline.execute()
 
         # 6.发送短信验证码
-        from libs.yuntongxun.sms import CCP
-        # 5分钟内正确输入---对应上面的redis300s
-        CCP().send_template_sms(mobile, [sms_code, 5], 1)
+        # from libs.yuntongxun.sms import CCP
+        # # 5分钟内正确输入---对应上面的redis300s
+        # CCP().send_template_sms(mobile, [sms_code, 5], 1)
+
+        # 6.改成使用celery来进行发送
+        from celery_tasks.sms.tasks import celery_send_sms_code
+        # delay的参数就等同于任务（函数）的参数
+        celery_send_sms_code.delay(mobile, sms_code)
 
         # 7.返回响应
         return JsonResponse({'code': 0, 'errmsg': 'ok'})
 
-"""
-生产者---》一个函数
-消费者（worker）---》在队列中查看有没有，有的话执行
-队列（中间人，经纪人，broker）---》一个队列
 
-Celery---将这3者实现了
-"""
 
 
 
