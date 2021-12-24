@@ -36,12 +36,13 @@ var vm = new Vue({
                 withCredentials:true,
             })
             .then(response => {
+                // 如果返回的code为0，跳转到首页，否则跳转到绑定页面
                 if (response.data.code == 0){
                     // 用户已绑定
                     var state = this.get_query_string('state');
                     location.href = 'http://www.meiduo.site:8080/';
                 } else {
-                    // 用户未绑定
+                    // 用户未绑定 这里的access_token 需要后端返回 即openid 唯一的标识
                     this.access_token = response.data.access_token;
                     this.is_show_waiting = false;
                 }

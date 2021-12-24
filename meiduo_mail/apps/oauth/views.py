@@ -3,6 +3,8 @@ from django.views import View
 from QQLoginTool.QQtool import OAuthQQ
 from meiduo_mail import settings
 from django.http import JsonResponse
+from apps.oauth.models import OAuthQQUser
+from django.contrib.auth import login
 
 # Create your views here.
 
@@ -95,6 +97,7 @@ class OauthQQview(View):
         if code is None:
             # 实际错误码应该又一个严格的规定
             return JsonResponse({'code': 400, 'errmsg': '参数不全'})
+
         # 2.通过code换取token--->需要一个QQ对象来进行操作，类似cursor游标
         # token--->E537ED5F128AD5F2820CA84A5C458C04--->一个人不会变
         qq = OAuthQQ(client_id=settings.QQ_CLIENT_ID,
@@ -105,7 +108,26 @@ class OauthQQview(View):
         # 3.通过token换取openid
         # openid---> 0F7272E90769D38757AF1E35611B8D1C--->同一个QQ号码不会变
         openid = qq.get_open_id(token)
-        pass
+
+        # 4.根据openid进行查询
+        try:
+            qquser = OAuthQQUser.objects.get(openid=openid)     # 使用get对 索引/唯一索引取值的时候，需要try
+        # 不存在
+        except OAuthQQUser.DoesNotExist:
+            # 5.如果没有绑定过，则需要绑定       前端需要将access_token返回给前端--->即openid
+            response = JsonResponse({'code': 400, 'access_token': openid})
+            return response
+        else:
+            # 6.存在
+            # 6.1设置session  1对多正向查询 含有外键类创建的对象.外键字段查询到对应的 用户
+            #       该查询到的用户即为主表中的用户对象
+            login(request, qquser.user)
+            # 6.2设置cookie
+            response = JsonResponse({'code': 0, 'errmsg': 'set cookie is ok'})
+            response.set_cookie('username', qquser.user.username)
+            return response
+
+
 
 
 
