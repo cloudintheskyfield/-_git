@@ -1,3 +1,5 @@
+import json
+
 from django.shortcuts import render
 from django.views import View
 from QQLoginTool.QQtool import OAuthQQ
@@ -5,6 +7,7 @@ from meiduo_mail import settings
 from django.http import JsonResponse
 from apps.oauth.models import OAuthQQUser
 from django.contrib.auth import login
+from apps.users.models import User
 
 # Create your views here.
 
@@ -126,6 +129,59 @@ class OauthQQview(View):
             response = JsonResponse({'code': 0, 'errmsg': 'set cookie is ok'})
             response.set_cookie('username', qquser.user.username)
             return response
+
+    def post(self, request):
+        # 1.接收请求
+        data = json.loads(request.body.decode())
+        # 2.获取请求参数 openid
+        mobile = data.get('mobile')
+        password = data.get('password')
+        sms_code = data.get('sms_code')
+        openid = data.get('access_token')
+
+        # 需要对数据进行验证(省略）
+        # 2.5.在redis中存储 短信验证码
+
+
+        # 3.根据手机号进行用户信息的查询
+        try:
+            user = User.objects.get(mobile=mobile)
+        except User.DoesNotExist:
+            # 手机号不存在 用户没有注册
+            user = User.objects.create_user(username=mobile, mobile=mobile, password=password)
+        else:
+            # 手机号存在 用户已经注册--->检查密码
+            if not user.check_password(password):
+                return JsonResponse({'code': 400, 'errmsg': '账号或者密码错误'})
+        # 4.创建QQ用户表中的信息
+        OAuthQQUser.objects.create(user=user, openid=openid)
+        # 5.状态保持
+        login(request, user)
+        # 6.返回响应
+        response = JsonResponse({'code': 0, 'errmsg': 'set cookie is ok'})
+        response.set_cookie('username', user.username)
+        return response
+
+
+    """
+    需求：绑定账号信息
+    前端：
+        当用户输入手机号，密码，短信验证码之后就发送axios请求，请求需要携带mobile,password,sms_code,access_token(openid)
+    后端：
+        请求：接收请求，获取请求参数
+        业务逻辑：绑定，完成状态保持
+        响应：返回code=0跳转到首页
+        路由：POST
+        步骤：
+            1.接收请求
+            2.获取请求参数
+            3.绑定（根据手机号进行查询）
+                3.1 查询到手机号已经注册，就可以直接保持（绑定）用户和openid信息
+                3.2 查询到手机号没有注册，就创建一个user信息，然后再进行绑定
+            4.完成状态保持
+            5.返回响应
+        
+    """
 
 
 
