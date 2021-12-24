@@ -67,7 +67,45 @@ class QQLoginURLView(View):
 
 """注意：该步骤出现404（路由问题） 或者405（类视图中方法定义为GET或者POST错误问题）"""
 
-
+"""
+需求：获取code，通过code换取token，再通过token换取openid
+前端：
+    应该获取用户同意登录的code，把这个code发送给后段
+后端：
+    请求  获取code
+    业务逻辑 
+        通过code换取token，再通过token换取openid
+        根据openid进行判断
+        如果没有绑定过，则需要绑定
+        如果绑定过，则直接登录
+    响应：
+    路由  GET     this.host + '/oauth_callback/?code='
+    步骤
+        1.获取code
+        2.通过code换取token
+        3.再通过token换取openid
+        4.根据openid进行判断--->是否绑定手机号
+        5.如果没有绑定过，则需要绑定
+        6.如果绑定过，则直接登录
+"""
+class OauthQQview(View):
+    def get(self, request):
+        # 1.获取code
+        code = request.GET.get('code')
+        if code is None:
+            # 实际错误码应该又一个严格的规定
+            return JsonResponse({'code': 400, 'errmsg': '参数不全'})
+        # 2.通过code换取token--->需要一个QQ对象来进行操作，类似cursor游标
+        # token--->E537ED5F128AD5F2820CA84A5C458C04--->一个人不会变
+        qq = OAuthQQ(client_id=settings.QQ_CLIENT_ID,
+                     client_secret=settings.QQ_CLIENT_SECRET,
+                     redirect_uri=settings.QQ_REDIRECT_URL,
+                     state='xxx')
+        token = qq.get_access_token(code)
+        # 3.通过token换取openid
+        # openid---> 0F7272E90769D38757AF1E35611B8D1C--->同一个QQ号码不会变
+        openid = qq.get_open_id(token)
+        pass
 
 
 

@@ -30,6 +30,7 @@ var vm = new Vue({
 
         // 从路径中获取qq重定向返回的code
         var code = this.get_query_string('code');
+        // 发送一个axios请求给 后面的路由
         axios.get(this.host + '/oauth_callback/?code=' + code, {
                 responseType: 'json',
                 withCredentials:true,
