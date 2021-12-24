@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'apps.verifications',
     # 第二种导入方法----book.apps.BookConfig------>改配置文件users下的apps---->不推荐使用
     # 注册django-cors-headers/ CORS
-    'corsheaders'
+    'corsheaders',
+    'apps.oauth'
 
 ]
 

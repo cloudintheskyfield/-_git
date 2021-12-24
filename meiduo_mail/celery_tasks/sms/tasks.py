@@ -13,3 +13,17 @@ def celery_send_sms_code(mobile, code):
     CCP().send_template_sms(mobile, [code, 5], 1)  # 有效期5min，模版为1
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
