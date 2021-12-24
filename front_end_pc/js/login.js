@@ -92,6 +92,7 @@ var vm = new Vue({
                 .then(response => {
                     if (response.data.code == 0) {
                         // 成功则跳转
+                        // 下面跳转的login_url 对应后端中返回的response中Json中的url
                         location.href = response.data.login_url;
                     };
                 })

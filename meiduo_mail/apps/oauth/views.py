@@ -1,6 +1,11 @@
 from django.shortcuts import render
+from django.views import View
+from QQLoginTool.QQtool import OAuthQQ
+from meiduo_mail import settings
+from django.http import JsonResponse
 
 # Create your views here.
+
 """
 第三方登录的步骤
 1.QQ互联开放平台申请成为开发者（不用做）
@@ -27,6 +32,49 @@ from django.shortcuts import render
 
 生成用户绑定链接------->获取code--------->获取token---------->获取openid--------->保存openid
 """
+"""
+生成用户绑定链接：
+    前端：当用户点击QQ登录图标的时候，前端应该发送一个axios（Ajax）请求
+    
+    后段：
+        请求
+        业务逻辑    调用QQLoginTool 生成跳转链接
+        响应      返回跳转链接{'code':0, 'qq_login_url': 'http://xxx'}
+        路由      this.host + '/qq/authorization/?next='
+        步骤
+            1.生成QQLoginTool实例对象
+            2.调用对象的方法生成跳转链接
+            3.返回响应
+"""
+
+class QQLoginURLView(View):
+    """生成点击QQ图标后QQ的跳转链接"""
+    def get(self, request):
+        # 1.生成QQ实例化对象
+        # client_id         appid
+        # client_secret     appsecret
+        # redirect_url = None   用户登录之后跳转的页面
+        # state = None      不知道什么意思，随便写，等出了问题再分析
+        #     def __init__(self, client_id=None, client_secret=None, redirect_uri=None, state=None): 4个参数
+        qq = OAuthQQ(client_id=settings.QQ_CLIENT_ID,
+                     client_secret=settings.QQ_CLIENT_SECRET,
+                     redirect_uri=settings.QQ_REDIRECT_URL,
+                     state='xxx')
+        # 2.调用对象的方法生成跳转链接   该跳转链接需要传递给前端进行跳转操作
+        qq_login_url = qq.get_qq_url()
+        # 3.返回响应
+        return JsonResponse({'code': 0, 'errmsg': 'set qq_url is ok', 'login_url': qq_login_url})
+
+"""注意：该步骤出现404（路由问题） 或者405（类视图中方法定义为GET或者POST错误问题）"""
+
+
+
+
+
+
+
+
+
 
 
 
