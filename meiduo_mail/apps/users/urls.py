@@ -1,5 +1,5 @@
 from django.urls import path
-from apps.users.views import UsernameCountView, RegisterView, LoginView, LogoutView
+from apps.users.views import UsernameCountView, RegisterView, LoginView, LogoutView, CenterView
 from apps.users.views import PhoneNumberCountView
 
 """使用POSTman进行测试的时候需要根据下面的路由进行测试"""
@@ -17,7 +17,9 @@ urlpatterns = [
     # http://127.0.0.1:8000/login/
     path('login/', LoginView.as_view()),
     # http://127.0.0.1:8000/logout/
-    path('logout/', LogoutView.as_view())
+    path('logout/', LogoutView.as_view()),
+    # http://127.0.0.1:8000/center/
+    path('center/', CenterView.as_view())
 
 ]
 

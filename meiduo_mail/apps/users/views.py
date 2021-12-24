@@ -249,6 +249,7 @@ class LoginView(View):
 
 
 """
+退出登录----------------------------------------------------------------->
 前端：
     当用户点击退出摁钮的时候，前端发送一个axios delete的请求
 后段：
@@ -270,3 +271,34 @@ class LogoutView(View):
         response = JsonResponse({'code': 0, 'errmsg': 'log out is ok'})
         response.delete_cookie('username')
         return response
+
+
+# 用户中心也必须是登录用户
+"""
+用户中心--------------------------------------------------------------------->
+LoginRequiredMixin  未登录的用户会返回重定向，重定向并不是JSON数据
+需要的是返回JSON数据 和亲端是通过JSON进行交互的
+"""
+# 调用utils中方法
+# 直接继承自上面的函数  LoginRequiredJSONMixin 应为类的第一个参数
+from utils.views import LoginRequiredJSOMixin
+class CenterView(LoginRequiredJSOMixin, View):
+    def get(self, request):
+        return JsonResponse({'code': 0, 'errmsg': 'set center is ok'})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
