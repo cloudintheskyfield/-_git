@@ -153,7 +153,7 @@ class OauthQQview(View):
             # 手机号存在 用户已经注册--->检查密码
             if not user.check_password(password):
                 return JsonResponse({'code': 400, 'errmsg': '账号或者密码错误'})
-        # 4.创建QQ用户表中的信息
+        # 4.创建QQ用户表中的信息--->对openid进行加密， 否则前端可以拿到
         OAuthQQUser.objects.create(user=user, openid=openid)
         # 5.状态保持
         login(request, user)
@@ -163,27 +163,60 @@ class OauthQQview(View):
         return response
 
 
-    """
-    需求：绑定账号信息
-    前端：
-        当用户输入手机号，密码，短信验证码之后就发送axios请求，请求需要携带mobile,password,sms_code,access_token(openid)
-    后端：
-        请求：接收请求，获取请求参数
-        业务逻辑：绑定，完成状态保持
-        响应：返回code=0跳转到首页
-        路由：POST
-        步骤：
-            1.接收请求
-            2.获取请求参数
-            3.绑定（根据手机号进行查询）
-                3.1 查询到手机号已经注册，就可以直接保持（绑定）用户和openid信息
-                3.2 查询到手机号没有注册，就创建一个user信息，然后再进行绑定
-            4.完成状态保持
-            5.返回响应
-        
-    """
+"""
+需求：QQ绑定账号信息
+前端：
+    当用户输入手机号，密码，短信验证码之后就发送axios请求，请求需要携带mobile,password,sms_code,access_token(openid)
+后端：
+    请求：接收请求，获取请求参数
+    业务逻辑：绑定，完成状态保持
+    响应：返回code=0跳转到首页
+    路由：POST
+    步骤：
+        1.接收请求
+        2.获取请求参数
+        3.绑定（根据手机号进行查询）
+            3.1 查询到手机号已经注册，就可以直接保持（绑定）用户和openid信息
+            3.2 查询到手机号没有注册，就创建一个user信息，然后再进行绑定
+        4.完成状态保持
+        5.返回响应
+    
+"""
 
+"""
+<----------------------------------------itsdangerous 的基本使用-------------------------------------------->
+itsdangerous就是为了数据加密的
+数据加密
+1.导入itsdangerous的类
+2.创建类的实例对象
+3.加密数据
 
+数据解密
+1.导入itsdangerous的类
+2.创建类的实例对象
+3.加密数据
+"""
+# 加密
+# 1.导入itsdangerous的类--->导入最长的--->不仅可以对数据进行加密，还可以对数据设置一个时效
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+# 2.创建类的实例对象
+# secret_key  ，密钥
+# expires_in = None   , 数据的过期时间 秒
+from meiduo_mail import settings
+s = Serializer(secret_key=settings.SECRET_KEY, expires_in=3600)
+# 3.加密数据--->加密openid--->dump转存计算机数据
+token = s.dumps({'openid': '1234567890'})
+# 上述字典数据加密后的结果
+# b'eyJhbGciOiJIUzUxMiIsImlhdCI6MTY0MDQ0MjM1NSwiZXhwIjoxNjQwNDQ1OTU1fQ.eyJvcGVuaWQiOiIxMjM0NTY3ODkwIn0._MLbG7IaLHACvveEOyNH4LUl2EyKBYH2dFEvx9DsbnwNPzrBHlkZpM25rx2iBBRPbbqt16jTTPc21GXducFn4A'
+
+# 解密
+# 1.导入itsdangerous的类
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+# 2.创建类的实例对象
+from meiduo_mail import settings
+s = Serializer(secret_key=settings.SECRET_KEY, expires_in=3600)
+# 3.解密数据--->load加载
+s.loads(token)
 
 
 

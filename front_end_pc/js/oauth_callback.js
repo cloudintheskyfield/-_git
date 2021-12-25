@@ -1,3 +1,4 @@
+// 下面这个vm可以在浏览器控制台输出进行查看
 var vm = new Vue({
     el: '#app',
     data: {
