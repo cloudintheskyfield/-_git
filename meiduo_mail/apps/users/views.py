@@ -278,19 +278,94 @@ class LogoutView(View):
 用户中心--------------------------------------------------------------------->
 LoginRequiredMixin  未登录的用户会返回重定向，重定向并不是JSON数据
 需要的是返回JSON数据 和亲端是通过JSON进行交互的
+
 """
 # 调用utils中方法
 # 直接继承自上面的函数  LoginRequiredJSONMixin 应为类的第一个参数
 from utils.views import LoginRequiredJSOMixin
+
+
 class CenterView(LoginRequiredJSOMixin, View):
     def get(self, request):
         info_data = {
+            # request.user 来源于中间件，系统会进行判断，如果确实是登录用户，可以获取登录用户对用的模型实例数据
+            # 如果不是登录用户request.user 返回一个 AnonymousUser
             'username': request.user.username,
             'email': request.user.email,
             'mobile': request.user.mobile,
             'email_active': request.user.email_active
         }
         return JsonResponse({'code': 0, 'errmsg': 'set center is ok', 'info_data': info_data})
+
+
+"""
+邮箱验证------------------------------->
+我的思路：
+    用户POST提交保存后，接收前端用户传入的Email数据，将该Email保存到数据库，并返回响应
+    
+需求：1.保存邮箱地址 2.发送一封激活邮件 3.用户激活邮件
+
+前端：
+    用户输入邮箱后发送ajax（axios）请求
+后端：
+当用户输入邮箱，点击保存后，会发送ajax请求
+    请求      就收请求，获取数据
+    业务逻辑    保存邮箱地址 发送一封激活邮件
+    响应  JSON code=0
+    路由  PUT---> 用来更新数据       var url = this.host + '/emails/'
+    步骤
+        1.接收请求
+        2.获取数据
+        3.保存邮箱地址
+        4.发送一封激活邮件
+        5.返回响应
+
+需求（实现什么功能）---> 请求 --业务逻辑--->响应 ---> 步骤 ---> 代码实现
+
+"""
+
+# 养成一个习惯，在每个函数的第一行添加断点
+# 添加一个LoginRequiredJSONMixin
+class EmailView(LoginRequiredJSOMixin, View):
+
+    def put(self, request):
+        # 1.接收请求
+        data = json.loads(request.body.decode())
+        # 2.获取数据
+        email = data.get('email')
+        # 3.验证数据--->正则（自己完善）
+        # 4. 更新数据
+        user = request.user
+        user.email = email
+        # 5.保存
+        user.save()
+        # 6.发送一封激活邮件（一会单独讲发送邮件）
+        # 7.返回响应
+        return JsonResponse({'code': 0, 'errmsg': 'set email is ok'})
+
+
+"""
+django项目
+1.django的基础 夯实 例如：data = json.loads(request.body.decode())
+2.需求分析
+3.学习新知识
+4.掌握分析问题，解决问题的能力（debug）
+
+
+"""
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

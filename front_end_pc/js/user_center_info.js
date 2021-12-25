@@ -87,6 +87,7 @@ var vm = new Vue({
 
             // 进行前端页面请求:
             var url = this.host + '/emails/'
+            // PUT传递非表单数据 类似POST
             axios.put(url,
                 {
                     email: this.email

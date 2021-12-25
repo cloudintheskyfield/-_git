@@ -52,6 +52,7 @@ from apps.users.models import User
             3.返回响应
 """
 
+# 点击QQ图标后生成跳转的链接
 class QQLoginURLView(View):
     """生成点击QQ图标后QQ的跳转链接"""
     def get(self, request):
@@ -93,6 +94,7 @@ class QQLoginURLView(View):
         5.如果没有绑定过，则需要绑定
         6.如果绑定过，则直接登录
 """
+# QQ实现第三方登录
 class OauthQQview(View):
     def get(self, request):
         # 1.获取code
