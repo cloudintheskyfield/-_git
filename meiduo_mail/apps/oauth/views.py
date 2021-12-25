@@ -115,10 +115,22 @@ class OauthQQview(View):
         # 4.根据openid进行查询
         try:
             qquser = OAuthQQUser.objects.get(openid=openid)     # 使用get对 索引/唯一索引取值的时候，需要try
-        # 不存在
+        # 当用户不存在时候跳转到绑定界面
         except OAuthQQUser.DoesNotExist:
             # 5.如果没有绑定过，则需要绑定       前端需要将access_token返回给前端--->即openid
-            response = JsonResponse({'code': 400, 'access_token': openid})
+
+            # 5.5对该处返回前端的openid进行加密，即access_token
+            """封装的思想其实就是把一些实现了特定功能的代码封装称一个函数（方法） 
+                封装的目的：解耦--->当需求发生改变的时候，对代码的需求影响比较小
+                封装的步骤：
+                    1.将要封装的代码放到一个函数中
+                    2.优化封装的代码
+                    3.验证封装的代码
+            """
+            from apps.oauth.utils import generic_openid
+            access_token = generic_openid(openid)
+
+            response = JsonResponse({'code': 400, 'access_token': access_token})
             return response
         else:
             # 6.存在
@@ -142,18 +154,23 @@ class OauthQQview(View):
         # 需要对数据进行验证(省略）
         # 2.5.在redis中存储 短信验证码
 
+        # 对前端传给后端的access_token进行解密
+        from apps.oauth.utils import check_access_token
+        openid = check_access_token(openid)
+        if openid is None:
+            return JsonResponse({'code': 400, 'errmsg': '参数缺失'})
 
         # 3.根据手机号进行用户信息的查询
         try:
             user = User.objects.get(mobile=mobile)
         except User.DoesNotExist:
-            # 手机号不存在 用户没有注册
+            # 手机号不存在 用户没有注册 需要创建数据库中的用户
             user = User.objects.create_user(username=mobile, mobile=mobile, password=password)
         else:
             # 手机号存在 用户已经注册--->检查密码
             if not user.check_password(password):
                 return JsonResponse({'code': 400, 'errmsg': '账号或者密码错误'})
-        # 4.创建QQ用户表中的信息--->对openid进行加密， 否则前端可以拿到
+        # 4.创建QQ用户表中的信息--->对openid进行加密， 否则前端可以拿到， 在上面的get中进行加密
         OAuthQQUser.objects.create(user=user, openid=openid)
         # 5.状态保持
         login(request, user)
