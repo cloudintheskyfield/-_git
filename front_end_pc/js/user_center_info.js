@@ -64,6 +64,7 @@ var vm = new Vue({
                         location.href = 'login.html'
                         return
                     }
+                    // 该处为后端返回的数据为 info_data 字典，所以后端返回用户信息的时候需要返回一个字典
                     this.username = response.data.info_data.username;
                     this.mobile = response.data.info_data.mobile;
                     this.email = response.data.info_data.email;

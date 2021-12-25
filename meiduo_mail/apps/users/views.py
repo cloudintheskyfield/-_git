@@ -284,7 +284,13 @@ LoginRequiredMixin  未登录的用户会返回重定向，重定向并不是JSO
 from utils.views import LoginRequiredJSOMixin
 class CenterView(LoginRequiredJSOMixin, View):
     def get(self, request):
-        return JsonResponse({'code': 0, 'errmsg': 'set center is ok'})
+        info_data = {
+            'username': request.user.username,
+            'email': request.user.email,
+            'mobile': request.user.mobile,
+            'email_active': request.user.email_active
+        }
+        return JsonResponse({'code': 0, 'errmsg': 'set center is ok', 'info_data': info_data})
 
 
 
