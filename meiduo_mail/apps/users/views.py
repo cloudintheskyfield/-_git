@@ -334,7 +334,7 @@ class EmailView(LoginRequiredJSOMixin, View):
         data = json.loads(request.body.decode())
         # 2.获取数据
         email = data.get('email')
-        # 3.验证数据--->正则（自己完善）
+        # 3.验证数据--->正则（自己完善）TODO 2
         # 4. 更新数据
         user = request.user
         user.email = email

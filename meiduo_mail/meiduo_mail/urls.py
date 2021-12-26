@@ -55,7 +55,9 @@ urlpatterns = [
     #   导入verifications应用的路由
     path('', include('apps.verifications.urls')),
     # 导入oauth的路由
-    path('', include('apps.oauth.urls'))
+    path('', include('apps.oauth.urls')),
+    # 导入area的路由
+    path('', include('apps.areas.urls'))
 ]
 
 

@@ -43,7 +43,7 @@ INSTALLED_APPS = [
     # 注册django-cors-headers/ CORS
     'corsheaders',
     'apps.oauth',
-    'apps.areas'
+    'apps.areas',
 
 ]
 
