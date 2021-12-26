@@ -1,3 +1,4 @@
+"""中间人的配置文件"""
 # 使用 Amazon SQS 作为作为中间人的URL为：
 # broker_url = 'sqs://ABCDEFGHIJKLMNOPQRST:ZYXK7NiynGlTogH8Nj+P9nlE73sq3@'
 

@@ -347,19 +347,36 @@ class EmailView(LoginRequiredJSOMixin, View):
         # 邮件的内容如果向使用html这个时候使用html_message
         message = ''
 
-        # 6.5对a标签的链接数据进行加密处理
+        # 6.5对a标签的链接数据进行加密处理 generic未注册的
         from apps.users.utils import generic_email_verify_token
+        # 将用户id作为token
         token = generic_email_verify_token(request.user.id)
 
         # 6.5.5组织激活邮件
-        html_message = '点击摁钮进行激活<a href=\'http://itcast.cn/?token=%s\'>激活</a>' % token
+        # html_message = '点击摁钮进行激活<a href=\'http://itcast.cn/?token=%s\'>激活</a>' % token
+        verify_url = 'http://www.meiduo.site:8080/success_verify_email.html?token=%s' % token
+        html_message = '<p>尊敬的用户您好！</p>'\
+                        '<p>感谢您使用美多商城</p>'\
+                        '<p>您的邮箱为：%s 点击此处链接激活您的邮箱：</p>'\
+                        '<p><a href="%s">%s<a>' % (email, verify_url, verify_url)
+        # 采用下面这种 名称<邮件> 的形式可以使邮件看起来更正规
         from_email = '美多商城<1747709835@qq.com>'
-        send_mail(subject=subject,
-                  message=message,
-                  html_message=html_message,
-                  from_email=from_email,
-                  recipient_list=['1747709835@qq.com']
-                  )
+        # send_mail(subject=subject,
+        #           message=message,
+        #           html_message=html_message,
+        #           from_email=from_email,
+        #           recipient_list=['1747709835@qq.com']
+        #           )
+        # 使用celery发送email
+        from celery_tasks.email.tasks import celery_send_email
+        # 注意该delay不能少 如果少了delay就不走 异步了
+        celery_send_email.delay(
+            subject=subject,
+            message=message,
+            html_message=html_message,
+            from_email=from_email,
+            recipient_list=['1747709835@qq.com']
+        )
 
         # 7.返回响应
         return JsonResponse({'code': 0, 'errmsg': 'set email is ok'})

@@ -17,9 +17,11 @@
 Celery---将这3者实现了
 
 """
-# 0.为celery的运行设置Django的环境
+# 0.为celery的运行设置Django的环境---配置环境变量，如果想使用设置中的变量就要这样配置
 import os
-os.environ.setdefault('DJANSO_SETTINGS_MODULE', 'meiduo_mail.settings')
+import django
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'meiduo_mail.settings')  # 再打错字吃屎去吧
+django.setup()
 # os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'meiduo_mail.settings') 上面配置为manage.py中的配置 为设置环境
 # meiduo_mail 为工程的名称--->随工程名称而改变
 
@@ -39,19 +41,26 @@ app.config_from_object('celery_tasks.config')
 
 # 3.需要celery自动检测指定包的任务
 # autodiscover_tasks参数是列表
-# 列表中的元素的是tasks的路径，自动检测app中的任务
-app.autodiscover_tasks(['celery_tasks.sms'])
+# 列表中的元素的是tasks的路径，自动检测app中的任务，自动检测该包下的任务
+app.autodiscover_tasks(['celery_tasks.sms', 'celery_tasks.email'])
+# app.autodiscover_tasks(['celery_tasks.email'])
 
 
 
 
 
 
-
-
-
-
-
+# #  <------------------------------------发送邮箱的配置-------------------------------------------------->
+# # 0.为celery的运行设置Django环境
+# import os
+# os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'meiduo_mail.settings')
+# # 1.创建celery的实例
+# from celery import Celery
+# app = Celery('celery_tasks')    # 后面的celery_tasks为设置的脚本路径
+# # 2.设置broker
+# app.config_from_object('celery_tasks.config')   # 通过加载配置文件来设置broker
+# # 3.自动检测任务
+# app.autodiscover_tasks(['celery_tasks.sms', 'celery_tasks.email'])  # 列表中的元素为tasks的路径 自动检测sms和email包下面的任务
 
 
 
