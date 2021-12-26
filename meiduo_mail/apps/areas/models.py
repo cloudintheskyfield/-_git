@@ -13,6 +13,29 @@ id      name        parent_id
 
 10101   雄县         10100
 10102   安新县       10100
+
+查询省份信息：
+    mysql> select * from tb_areas where parent_id is NULL;
+查询市：
+    mysql> select * from tb_areas where parent_id = 130000;
+查询县：
+    mysql> select * from tb_areas where parent_id = 130100;
+    
+shell中查询省:
+    >>> Area.objects.filter(parent=None)
+    >>> Area.objects.filter(parent_id__isnull=True)
+    >>> Area.objects.filter(parent__isnull=True)
+shell中查询市
+    >>> Area.objects.filter(parent=130000)
+    >>> Area.objects.filter(parent_id=130000)
+
+    >>> province = Area.objects.get(id=130000)
+    >>> province.subs.all()
+shell中查询县
+    >>> city = Area.objects.get(id=130100)
+    >>> city.subs.all()
+
+
 """
 
 class Area(models.Model):
@@ -21,7 +44,7 @@ class Area(models.Model):
     parent = models.ForeignKey('self', on_delete=models.SET_NULL,
                                related_name='subs', null=True, blank=True, verbose_name='上级行政区划')
 
-    # related_name 关联的模型的名字
+    # related_name 关联的模型的名字---> 改变area_set为subs，之后可以通过省份获取市，通过市获取县
     # 默认是 关联模型类名小写_set      area_set
     # 我们可以通过related_name 修改默认是名字，现在就改为了subs
     class Meta:
