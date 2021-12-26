@@ -10,6 +10,7 @@ var vm = new Vue({
         addresses: {},
         limit: '',
         default_address_id: '',
+        // 字典 对象
         form_address: {
             receiver: '',
             province_id: '',
@@ -40,6 +41,7 @@ var vm = new Vue({
         this.get_province();
 
     },
+    // vue中的watch观察到省份id发送变化，就会发送axios请求，
     watch: {
         'form_address.province_id': function () {
             if (this.form_address.province_id) {
