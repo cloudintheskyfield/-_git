@@ -346,7 +346,13 @@ class EmailView(LoginRequiredJSOMixin, View):
         subject = '美多商城激活邮件'
         # 邮件的内容如果向使用html这个时候使用html_message
         message = ''
-        html_message = '点击摁钮进行激活<a href=\'http://itcast.cn\'>激活</a>'
+
+        # 6.5对a标签的链接数据进行加密处理
+        from apps.users.utils import generic_email_verify_token
+        token = generic_email_verify_token(request.user.id)
+
+        # 6.5.5组织激活邮件
+        html_message = '点击摁钮进行激活<a href=\'http://itcast.cn/?token=%s\'>激活</a>' % token
         from_email = '美多商城<1747709835@qq.com>'
         send_mail(subject=subject,
                   message=message,
