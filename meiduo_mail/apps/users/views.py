@@ -339,7 +339,22 @@ class EmailView(LoginRequiredJSOMixin, View):
         user.email = email
         # 5.保存
         user.save()
+
         # 6.发送一封激活邮件（一会单独讲发送邮件）
+        from django.core.mail import send_mail
+        # def send_mail(subject, message, from_email, recipient_list,
+        subject = '美多商城激活邮件'
+        # 邮件的内容如果向使用html这个时候使用html_message
+        message = ''
+        html_message = '点击摁钮进行激活<a href=\'http://itcast.cn\'>激活</a>'
+        from_email = '美多商城<1747709835@qq.com>'
+        send_mail(subject=subject,
+                  message=message,
+                  html_message=html_message,
+                  from_email=from_email,
+                  recipient_list=['1747709835@qq.com']
+                  )
+
         # 7.返回响应
         return JsonResponse({'code': 0, 'errmsg': 'set email is ok'})
 
@@ -351,7 +366,22 @@ django项目
 3.学习新知识
 4.掌握分析问题，解决问题的能力（debug）
 
+"""
 
+"""
+1.设置QQ/163邮箱服务器
+2.设置邮件发送的配置信息
+    # 1.django的那个类发送邮件
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    # 2.邮箱服务器
+    EMAIL_HOST = 'smtp.qq.com'
+    # 3.邮箱端口
+    EMAIL_PORT = 25
+    # 4.邮箱使用者
+    EMAIL_HOST_USER = '1747709835@qq.com'
+    # 5.下面的密码为授权码
+    EMAIL_HOST_PASSWORD = 'tkvskmcpteqreceg'
+3.调用 send_mail方法
 """
 
 

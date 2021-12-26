@@ -23,3 +23,12 @@ class LoginRequiredJSOMixin(LoginRequiredMixin):
 
 
 
+
+
+
+
+
+
+
+
+

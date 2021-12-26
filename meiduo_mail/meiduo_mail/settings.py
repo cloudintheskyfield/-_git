@@ -251,8 +251,19 @@ QQ_CLIENT_SECRET = 'c6ce949e04e12ecc909ae6a8b09b637c'
 # 申请时添加的，登录成功后回调的路径
 QQ_REDIRECT_URL = 'http://www.meiduo.site:8080/oauth_callback.html'
 
-
-
+# -------------------------------QQ邮件发送相关---------------------------
+# 1.django的那个类发送邮件
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# 2.邮箱服务器
+EMAIL_HOST = 'smtp.qq.com'
+# 3.邮箱端口
+EMAIL_PORT = 25
+# 4.邮箱使用者
+EMAIL_HOST_USER = '1747709835@qq.com'
+# 5.下面的密码为授权码
+EMAIL_HOST_PASSWORD = 'tkvskmcpteqreceg'
+# 收件人看到的发件人
+EMAIL_FROM = '美多商城<王爽 1747709835@qq.com>'
 
 
 
