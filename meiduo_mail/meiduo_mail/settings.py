@@ -148,7 +148,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 #     }
 # }
 CACHES = {
-    'default': {  # 0号库存默认数据 (预留）
+    'default': {  # 0号库存默认数据 (预留）------->保存省/市/区数据
         'BACKEND': 'django_redis.cache.RedisCache',
         'LOCATION': 'redis://127.0.0.1:6379/0',
         'OPTIONS': {
