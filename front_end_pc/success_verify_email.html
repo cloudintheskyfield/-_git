@@ -41,6 +41,7 @@
                 success: true
             },
             created: function(){
+                // 数据在查询字符串中，body里面没有数据 后面的window.location.search为查询字符串
                 axios.put(this.host+'/emails/verification/'+ window.location.search,{
                     responseType: 'json',
                     withCredentials:true,
