@@ -624,8 +624,11 @@ class AddressCreateView(LoginRequiredJSOMixin, View):
         # 2.查询数据
         address = Address.objects.get(id=address_id)
         # 3.删除数据
-        address.is_deleted = True
-        address.save()
+        try:
+            address.delete()
+        except Exception as e:
+            print(e)
+            return JsonResponse({'code': 400, 'errmsg': 'delete is ok'})
         # 4.返回响应
         return JsonResponse({'code': 0, 'errmsg': 'delete is ok'})
 
@@ -636,7 +639,7 @@ class AddressView(LoginRequiredJSOMixin, View):
         # 1.查询指定数据
         user = request.user
         # 1.1 addresses = user.addresses
-        addresses = Address.objects.filter(user=user, is_deleted=False)
+        addresses = Address.objects.filter(user_id=user.id, is_deleted=0)
 
         # 2.转化为字典数据
         address_list = []
@@ -654,7 +657,8 @@ class AddressView(LoginRequiredJSOMixin, View):
                 'email': address.email
             })
         # 返回响应
-        return JsonResponse({'code': 0, 'errmsg': 'display address info is ok', 'addresses': address_list})
+        return JsonResponse({'code': 0, 'errmsg': 'display address info is ok',
+                             'addresses': address_list, 'default_address_id': user.default_address_id})
 
 
 # 修改地址标题的实现
@@ -672,7 +676,7 @@ class AddressTitleView(LoginRequiredJSOMixin, View):
         return JsonResponse({'code': 0, 'errmsg': 'set address title is ok'})
 
 
-# 设置默认地址的实现 TODO
+# 设置默认地址的实现
 class AddressDefaultView(LoginRequiredJSOMixin, View):
     def put(self, request, address_id):
         # 1.修改数据

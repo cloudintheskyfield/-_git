@@ -52,7 +52,7 @@ from apps.users.models import User
             3.返回响应
 """
 
-# 点击QQ图标后生成跳转的链接
+# 点击QQ图标后生成跳转的链接    TODO
 class QQLoginURLView(View):
     """生成点击QQ图标后QQ的跳转链接"""
     def get(self, request):
@@ -100,11 +100,9 @@ class OauthQQview(View):
         # 1.获取code
         code = request.GET.get('code')
         if code is None:
-            # 实际错误码应该又一个严格的规定
             return JsonResponse({'code': 400, 'errmsg': '参数不全'})
 
         # 2.通过code换取token--->需要一个QQ对象来进行操作，类似cursor游标
-        # token--->E537ED5F128AD5F2820CA84A5C458C04--->一个人不会变
         qq = OAuthQQ(client_id=settings.QQ_CLIENT_ID,
                      client_secret=settings.QQ_CLIENT_SECRET,
                      redirect_uri=settings.QQ_REDIRECT_URL,

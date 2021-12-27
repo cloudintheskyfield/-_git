@@ -23,7 +23,7 @@ from django.shortcuts import render
 # Create your views here.
 from django.views import View
 
-
+# 图形验证码
 class ImageCodeView(View):
 
     def get(self, request, uuid):
@@ -79,7 +79,7 @@ class ImageCodeView(View):
     
 """
 
-
+# 短信验证码
 class SmsCodeView(View):
     def get(self, request, mobile):
         # 1.获取请求参数
@@ -123,7 +123,7 @@ class SmsCodeView(View):
         # 5.1 添加一个发送标记 有效期60秒 内容是什么都可以
         pipeline.setex('send_flag_%s' % mobile, 60, 1)     # 注意send_flag为存入的二进制数据
 
-        # 4.5.2管道执行指令
+        # 5.2管道执行指令
         pipeline.execute()
 
         # 6.发送短信验证码

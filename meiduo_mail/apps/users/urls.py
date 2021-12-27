@@ -1,6 +1,6 @@
 from django.urls import path
 from apps.users.views import UsernameCountView, RegisterView, LoginView, LogoutView, CenterView, EmailView, \
-    EmailVerifyView, AddressCreateView, AddressView, AddressTitleView
+    EmailVerifyView, AddressCreateView, AddressView, AddressTitleView, AddressDefaultView, PasswordChangeView
 from apps.users.views import PhoneNumberCountView
 
 """使用POSTman进行测试的时候需要根据下面的路由进行测试"""
@@ -27,10 +27,21 @@ urlpatterns = [
     path('emails/verification/', EmailVerifyView.as_view()),
     # var url = this.host + '/addresses/create/'
     path('addresses/create/', AddressCreateView.as_view()),
+
     # 设置地址展示
     path('addresses/', AddressView.as_view()),
+
     # 设置地址标题保存，axios.put(this.host + '/addresses/' + this.addresses[index].id + '/title/', {
-    path('addresses/<addresses_id>/title/', AddressTitleView.as_view())
+    path('addresses/<addresses_id>/title/', AddressTitleView.as_view()),
+
+    # 默认地址
+    path('addresses/<address_id>/default/', AddressDefaultView.as_view()),
+
+    # 修改地址   删除地址
+    path('addresses/<address_id>/', AddressCreateView.as_view()),
+    # 修改密码
+    path('password/', PasswordChangeView.as_view())
+
 
 ]
 
