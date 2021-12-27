@@ -1,6 +1,6 @@
 from django.urls import path
 from apps.users.views import UsernameCountView, RegisterView, LoginView, LogoutView, CenterView, EmailView, \
-    EmailVerifyView, AddressCreateView
+    EmailVerifyView, AddressCreateView, AddressView
 from apps.users.views import PhoneNumberCountView
 
 """使用POSTman进行测试的时候需要根据下面的路由进行测试"""
@@ -26,7 +26,10 @@ urlpatterns = [
     # http://127.0.0.1:8000/emails/verification/
     path('emails/verification/', EmailVerifyView.as_view()),
     # var url = this.host + '/addresses/create/'
-    path('addresses/create/', AddressCreateView.as_view())
+    path('addresses/create/', AddressCreateView.as_view()),
+    #
+    path('addresses/', AddressView.as_view())
+
 ]
 
 

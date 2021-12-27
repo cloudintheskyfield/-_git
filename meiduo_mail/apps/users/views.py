@@ -559,6 +559,30 @@ class AddressCreateView(LoginRequiredJSOMixin, View):
         # 5.返回响应
         return JsonResponse({'code': 0, 'errmsg': 'set address is ok', 'address': address_dict})
 
+class AddressView(View):
+    def get(self, request):
+        # 1.查询指定数据
+        user = request.user
+        # 1.1 addresses = user.addresses
+        addresses = Address.objects.filter(user=user, is_deleted=False)
+
+        # 2.转化为字典数据
+        address_list = []
+        for address in addresses:
+            address_list.append({
+                'id': address.id,
+                'title': address.title,
+                'receiver': address.receiver,
+                'province': address.province.name,
+                'city': address.city.name,
+                'district': address.district.name,
+                'place': address.place,
+                'mobile': address.mobile,
+                'tel': address.tel,
+                'email': address.email
+            })
+        # 返回响应
+        return JsonResponse({'code': 0, 'errmsg': 'display address info is ok', 'addresses': address_list})
 
 
 
