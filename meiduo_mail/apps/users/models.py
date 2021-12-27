@@ -34,6 +34,7 @@ from utils.models import BaseModel
 
 
 class Address(BaseModel):
+    # 作为User表的外键与 User表中的id进行关联
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='addresses', verbose_name='用户')
     title = models.CharField(max_length=20, verbose_name='地址名称')
     receiver = models.CharField(max_length=20, verbose_name='收货人')

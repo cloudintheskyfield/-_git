@@ -327,6 +327,8 @@ class CenterView(LoginRequiredJSOMixin, View):
 # 养成一个习惯，在每个函数的第一行添加断点
 # 添加一个LoginRequiredJSONMixin
 """为用户发送激活邮件"""
+
+
 class EmailView(LoginRequiredJSOMixin, View):
 
     def put(self, request):
@@ -356,10 +358,10 @@ class EmailView(LoginRequiredJSOMixin, View):
         # 6.5.5组织激活邮件
         # html_message = '点击摁钮进行激活<a href=\'http://itcast.cn/?token=%s\'>激活</a>' % token
         verify_url = 'http://www.meiduo.site:8080/success_verify_email.html?token=%s' % token
-        html_message = '<p>尊敬的用户您好！</p>'\
-                        '<p>感谢您使用美多商城</p>'\
-                        '<p>您的邮箱为：%s 点击此处链接激活您的邮箱：</p>'\
-                        '<p><a href="%s">%s<a>' % (email, verify_url, verify_url)
+        html_message = '<p>尊敬的用户您好！</p>' \
+                       '<p>感谢您使用美多商城</p>' \
+                       '<p>您的邮箱为：%s 点击此处链接激活您的邮箱：</p>' \
+                       '<p><a href="%s">%s<a>' % (email, verify_url, verify_url)
         # 采用下面这种 名称<邮件> 的形式可以使邮件看起来更正规
         from_email = '美多商城<1747709835@qq.com>'
         # send_mail(subject=subject,
@@ -427,6 +429,8 @@ django项目
         7.返回响应JSON
 """
 """用户点击激活邮件链接后的操作"""
+
+
 class EmailVerifyView(View):
     def put(self, request):
         # 1.接收请求
@@ -477,21 +481,83 @@ class EmailVerifyView(View):
     3.返回响应
 """
 
+"""
+需求：
+    新增地址
+前端：
+    当用户填写完成地址信息后，前端应该发送一个axios请求,会携带相关信息（POST---body)
+后端：
+    请求：接收请求，获取参数
+    业务逻辑：数据入库
+    响应：返回响应
+    路由：     POST    /addresses/create/
+    步骤：
+        1.接收请求
+        2.获取参数，验证参数
+        3.数据入库
+        4.返回响应
+    
+"""
+from apps.users.models import Address
 
 
+# 新增地址的实现
+class AddressCreateView(LoginRequiredJSOMixin, View):
+    def post(self, request):
+        # 1.接收参数
+        data = json.loads(request.body.decode())
+        # 2.获取参数
+        # form_address: {
+        receiver = data.get('receiver')
+        province_id = data.get('province_id')
+        city_id = data.get('city_id')
+        district_id = data.get('district_id')
+        place = data.get('place')
+        mobile = data.get('mobile')
+        tel = data.get('tel')
+        email = data.get('email')
 
+        user = request.user
+        # 3.验证参数(省略）TODO
+        # 3.1验证必传参数
+        # 3.2省市区的id是否正确
+        # 3.3详细地址的长度
+        # 3.4手机号
+        # 3.5固定电话
+        # 3.6邮箱
 
+        # 4.数据入库
+        address = Address.objects.create(
+            user=user,
+            title=receiver,
+            receiver=receiver,
+            province_id=province_id,
+            city_id=city_id,
+            district_id=district_id,
+            place=place,
+            mobile=mobile,
+            tel=tel,
+            email=email,
+        )
+        # 4.5转化一个字典 返回给前端
+        address_dict = {
+            'user': address.user.username,
 
+            'id': address.id,
+            'title': address.title,
+            'receiver': address.receiver,
+            # 该处为正向查询，通过地址查询到外键关联对应的市信息
+            'province_id': address.province.name,
+            'city_id': address.city.name,
+            'district_id': address.district.name,
+            'place': address.place,
+            'mobile': address.mobile,
+            'tel': address.tel,
+            'email': address.email,
+        }
 
-
-
-
-
-
-
-
-
-
+        # 5.返回响应
+        return JsonResponse({'code': 0, 'errmsg': 'set address is ok', 'address': address_dict})
 
 
 
