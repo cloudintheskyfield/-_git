@@ -5,6 +5,7 @@ from django.http import JsonResponse
 # Create your views here.
 from django.views import View
 from apps.users.models import User  # abc
+from django.core.cache import cache
 
 """
 需求分析：根据页面的功能（从上倒下，从左到右面），那些功能需要和后段配合完成
@@ -285,6 +286,7 @@ LoginRequiredMixin  未登录的用户会返回重定向，重定向并不是JSO
 from utils.views import LoginRequiredJSOMixin
 
 
+# 用户中心信息展示
 class CenterView(LoginRequiredJSOMixin, View):
     def get(self, request):
         info_data = {
@@ -324,11 +326,11 @@ class CenterView(LoginRequiredJSOMixin, View):
 
 """
 
+
 # 养成一个习惯，在每个函数的第一行添加断点
 # 添加一个LoginRequiredJSONMixin
-"""为用户发送激活邮件"""
 
-
+# 为用户发送激活邮件
 class EmailView(LoginRequiredJSOMixin, View):
 
     def put(self, request):
@@ -370,7 +372,7 @@ class EmailView(LoginRequiredJSOMixin, View):
         #           from_email=from_email,
         #           recipient_list=['1747709835@qq.com']
         #           )
-        # 使用celery发送email
+        # 使用celery发送email 注意一定要启动了celery
         from celery_tasks.email.tasks import celery_send_email
         # 注意该delay不能少 如果少了delay就不走 异步了
         celery_send_email.delay(
@@ -428,9 +430,9 @@ django项目
         6.修改数据
         7.返回响应JSON
 """
-"""用户点击激活邮件链接后的操作"""
 
 
+# 用户点击验证邮件中的验证内容后面的操作
 class EmailVerifyView(View):
     def put(self, request):
         # 1.接收请求
@@ -499,15 +501,15 @@ class EmailVerifyView(View):
     
 """
 from apps.users.models import Address
+from apps.areas.models import Area
 
 
-# 新增地址的实现
+# 新增地址的实现   修改地址    删除地址
 class AddressCreateView(LoginRequiredJSOMixin, View):
     def post(self, request):
         # 1.接收参数
         data = json.loads(request.body.decode())
         # 2.获取参数
-        # form_address: {
         receiver = data.get('receiver')
         province_id = data.get('province_id')
         city_id = data.get('city_id')
@@ -520,12 +522,28 @@ class AddressCreateView(LoginRequiredJSOMixin, View):
         user = request.user
         # 3.验证参数(省略）TODO
         # 3.1验证必传参数
-        # 3.2省市区的id是否正确
+        if not all([receiver, province_id, city_id, district_id, place, mobile]):
+            return JsonResponse({'code': 400, 'errmsg': '参数不全'})
+        # 3.2省市区的id是否正确（如果能在区表中查到市，根据市查到区/县说明id正确）
+        province = Area.objects.get(id=province_id)
+        city = Area.objects.get(id=city_id)
+        district = Area.objects.get(id=district_id)
+        if not all([province, city, district]):
+            return JsonResponse({'code': 400, 'errmsg': '请输入正确的地区信息'})
         # 3.3详细地址的长度
+        if len(place) > 50:
+            return JsonResponse({'code': 400, 'errmsg': '地址过长'})
         # 3.4手机号
+        if not re.match('1[345789]\d{9}', mobile):
+            return JsonResponse({'code': 400, 'errmsg': '手机号不正确，请重新输入'})
         # 3.5固定电话
+        if len(tel) > 0:
+            if not re.match('(\d{4}-)?\d{6,8}', tel):
+                return JsonResponse({'code': 400, 'errmsg': '电话格式不正确'})
         # 3.6邮箱
-
+        if len(email) > 0:
+            if not re.match('^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$', email):
+                return JsonResponse({'code': 400, 'errmsg': '邮箱格式不正确'})
         # 4.数据入库
         address = Address.objects.create(
             user=user,
@@ -559,8 +577,61 @@ class AddressCreateView(LoginRequiredJSOMixin, View):
         # 5.返回响应
         return JsonResponse({'code': 0, 'errmsg': 'set address is ok', 'address': address_dict})
 
+    def put(self, request, address_id):
+        # 1.接收数据
+        data = json.loads(request.body.decode())
+        receiver = data.get('receiver')
+
+        # 1.5 查询到的为缓存数据，不走缓存 TODO
+        province = data.get('province')
+        city = data.get('city')
+        district = data.get('district')
+
+        place = data.get('place')
+        mobile = data.get('mobile')
+        tel = data.get('tel')
+        email = data.get('email')
+        # 2. 修改数据
+        address = Address.objects.get(id=address_id)
+        address.receiver = receiver
+        address.province = province
+        address.city = city
+        address.district = district
+        address.place = place
+        address.mobile = mobile
+        address.tel = tel
+        address.email = email
+
+        address.save()
+        # 3.封装字典
+        address_list = [{
+            'receiver': receiver,
+            'province': province,
+            'city': city,
+            'district': district,
+            'place': place,
+            'mobile': mobile,
+            'tel': tel,
+            'email': email
+        }]
+        address.save()
+        # 4.返回响应
+        return JsonResponse({'code': 0, 'message': 'modify address is ok', 'address': address_list})
+        pass
+
+    def delete(self, request, address_id):
+        # 1.获取数据
+        # 2.查询数据
+        address = Address.objects.get(id=address_id)
+        # 3.删除数据
+        address.is_deleted = True
+        address.save()
+        # 4.返回响应
+        return JsonResponse({'code': 0, 'errmsg': 'delete is ok'})
+
+
 # 地址展示的实现
-class AddressView(View):
+class AddressView(LoginRequiredJSOMixin, View):
     def get(self, request):
         # 1.查询指定数据
         user = request.user
@@ -586,10 +657,6 @@ class AddressView(View):
         return JsonResponse({'code': 0, 'errmsg': 'display address info is ok', 'addresses': address_list})
 
 
-"""
-axios.put(this.host + '/addresses/' + this.addresses[index].id + '/title/', {
-
-"""
 # 修改地址标题的实现
 class AddressTitleView(LoginRequiredJSOMixin, View):
     def put(self, request, addresses_id):
@@ -605,11 +672,42 @@ class AddressTitleView(LoginRequiredJSOMixin, View):
         return JsonResponse({'code': 0, 'errmsg': 'set address title is ok'})
 
 
+# 设置默认地址的实现 TODO
+class AddressDefaultView(LoginRequiredJSOMixin, View):
+    def put(self, request, address_id):
+        # 1.修改数据
+        user = request.user
+        user.default_address_id = address_id
+        user.save()
+        # 2.返回响应
+        # default_address_id        addresses
+        return JsonResponse({'code': 0, 'errmsg': 'set default address is ok'})
 
 
+# 修改密码的实现
+class PasswordChangeView(LoginRequiredJSOMixin, View):
+    def put(self, request):
+        # 1.查询信息
+        user = request.user
+
+        # 2.接收数据
+        data = json.loads(request.body.decode())
+        old_password = data.get('old_password')
+        new_password = data.get('new_password')
+        new_password2 = data.get('new_password2')
+        # 3.验证数据
+        from django.contrib.auth import authenticate
+        user = authenticate(username=user.username, password=old_password)
 
 
+        if not user:
+            return JsonResponse({'code': 400, 'errmsg': '密码输入不正确，请重新尝试'})
+        if new_password != new_password2:
+            return JsonResponse({'code': 400, 'errmsg': '密码不一致'})
 
-
-
-
+        # 4.数据更新
+        user.set_password(new_password)
+        user.save()
+        #           password: pbkdf2_sha256$150000$uIwuwgLSRRmU$P7tLdTHEP7SSpmts1TeMs8+9u01172g6ahCIle1/i6Q=
+        # 5.返回响应
+        return JsonResponse({'code': 0, 'errmsg': 'set password is ok'})
