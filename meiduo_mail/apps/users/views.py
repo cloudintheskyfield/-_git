@@ -559,6 +559,7 @@ class AddressCreateView(LoginRequiredJSOMixin, View):
         # 5.返回响应
         return JsonResponse({'code': 0, 'errmsg': 'set address is ok', 'address': address_dict})
 
+# 地址展示的实现
 class AddressView(View):
     def get(self, request):
         # 1.查询指定数据
@@ -583,6 +584,25 @@ class AddressView(View):
             })
         # 返回响应
         return JsonResponse({'code': 0, 'errmsg': 'display address info is ok', 'addresses': address_list})
+
+
+"""
+axios.put(this.host + '/addresses/' + this.addresses[index].id + '/title/', {
+
+"""
+# 修改地址标题的实现
+class AddressTitleView(LoginRequiredJSOMixin, View):
+    def put(self, request, addresses_id):
+        # 1.获取请求参数
+        data = json.loads(request.body.decode())
+        title = data.get('title')
+        user = request.user
+        # 2.修改指定数据
+        addresses = Address.objects.get(user_id=user.id, id=addresses_id)
+        addresses.title = title
+        addresses.save()
+        # 3.返回响应
+        return JsonResponse({'code': 0, 'errmsg': 'set address title is ok'})
 
 
 
