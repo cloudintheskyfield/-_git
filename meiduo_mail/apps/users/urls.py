@@ -17,8 +17,10 @@ urlpatterns = [
     path('register/', RegisterView.as_view()),
     # http://127.0.0.1:8000/login/
     path('login/', LoginView.as_view()),
+
     # http://127.0.0.1:8000/logout/
     path('logout/', LogoutView.as_view()),
+
     # http://127.0.0.1:8000/info/       根据前端的路由来的
     path('info/', CenterView.as_view()),
     # http://127.0.0.1:8000/emails/

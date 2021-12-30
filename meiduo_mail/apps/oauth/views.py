@@ -52,7 +52,7 @@ from apps.users.models import User
             3.返回响应
 """
 
-# 点击QQ图标后生成跳转的链接    TODO
+# 点击QQ图标后生成跳转的链接
 class QQLoginURLView(View):
     """生成点击QQ图标后QQ的跳转链接"""
     def get(self, request):
@@ -94,7 +94,7 @@ class QQLoginURLView(View):
         5.如果没有绑定过，则需要绑定
         6.如果绑定过，则直接登录
 """
-# QQ实现第三方登录
+# QQ实现第三方登录 TODO 点击头像后进行的操作
 class OauthQQview(View):
     def get(self, request):
         # 1.获取code
@@ -106,7 +106,7 @@ class OauthQQview(View):
         qq = OAuthQQ(client_id=settings.QQ_CLIENT_ID,
                      client_secret=settings.QQ_CLIENT_SECRET,
                      redirect_uri=settings.QQ_REDIRECT_URL,
-                     state='xxx')
+                     state='xxxxx')
         token = qq.get_access_token(code)
         # 3.通过token换取openid
         # openid---> 0F7272E90769D38757AF1E35611B8D1C--->同一个QQ号码不会变

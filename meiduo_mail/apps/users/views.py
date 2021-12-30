@@ -260,7 +260,7 @@ class LoginView(View):
     
 """
 
-
+# 退出登录 的类视图
 class LogoutView(View):
     # 该处定义名称的时候定义get/ post/ put等等 按照规则
     # 此处对应前端js中的axios.get 中的get
@@ -506,6 +506,7 @@ from apps.areas.models import Area
 
 # 新增地址的实现   修改地址    删除地址
 class AddressCreateView(LoginRequiredJSOMixin, View):
+    # 新增地址
     def post(self, request):
         # 1.接收参数
         data = json.loads(request.body.decode())
@@ -520,7 +521,7 @@ class AddressCreateView(LoginRequiredJSOMixin, View):
         email = data.get('email')
 
         user = request.user
-        # 3.验证参数(省略）TODO
+        # 3.验证参数(省略）
         # 3.1验证必传参数
         if not all([receiver, province_id, city_id, district_id, place, mobile]):
             return JsonResponse({'code': 400, 'errmsg': '参数不全'})
@@ -577,12 +578,14 @@ class AddressCreateView(LoginRequiredJSOMixin, View):
         # 5.返回响应
         return JsonResponse({'code': 0, 'errmsg': 'set address is ok', 'address': address_dict})
 
+    # 修改地址
     def put(self, request, address_id):
+
         # 1.接收数据
         data = json.loads(request.body.decode())
         receiver = data.get('receiver')
 
-        # 1.5 查询到的为缓存数据，不走缓存 TODO
+        # 1.5 查询到的为未改变的数据 需求：拿到用户输入的数据 TODO
         province = data.get('province')
         city = data.get('city')
         district = data.get('district')
@@ -594,9 +597,11 @@ class AddressCreateView(LoginRequiredJSOMixin, View):
         # 2. 修改数据
         address = Address.objects.get(id=address_id)
         address.receiver = receiver
-        address.province = province
-        address.city = city
-        address.district = district
+
+        address.province_id = province
+        address.city_id = city
+        address.district_id = district
+
         address.place = place
         address.mobile = mobile
         address.tel = tel
@@ -604,7 +609,7 @@ class AddressCreateView(LoginRequiredJSOMixin, View):
 
         address.save()
         # 3.封装字典
-        address_list = [{
+        address_dict = {
             'receiver': receiver,
             'province': province,
             'city': city,
@@ -613,11 +618,11 @@ class AddressCreateView(LoginRequiredJSOMixin, View):
             'mobile': mobile,
             'tel': tel,
             'email': email
-        }]
+        }
         address.save()
         # 4.返回响应
-        return JsonResponse({'code': 0, 'message': 'modify address is ok', 'address': address_list})
-        pass
+        return JsonResponse({'code': 0, 'message': 'modify address is ok', 'address': address_dict})
+
 
     def delete(self, request, address_id):
         # 1.获取数据
