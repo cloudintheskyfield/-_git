@@ -57,7 +57,10 @@ urlpatterns = [
     # 导入oauth的路由
     path('', include('apps.oauth.urls')),
     # 导入area的路由
-    path('', include('apps.areas.urls'))
+    path('', include('apps.areas.urls')),
+    # goods的url
+    path('', include('apps.goods.urls'))
+
 ]
 
 

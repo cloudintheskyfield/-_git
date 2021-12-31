@@ -33,19 +33,47 @@ stu_id          teacher_id
 """
 
 # 上传图片的代码------------------------
-from fdfs_client.client import Fdfs_client
+# from fdfs_client.client import Fdfs_client
 # 1.创建客户端
 # 修改加载配置文件的路径
 # client = Fdfs_client(r'utils/fastdfs/client.conf')
-client = Fdfs_client(r'/Users/mac/PycharmProjects/35_美多商城/-_git/meiduo_mail/utils/fastdfs/client.conf')
+# client = Fdfs_client(r'/Users/mac/PycharmProjects/35_美多商城/-_git/meiduo_mail/utils/fastdfs/client.conf')
 
 # 2.上传图片
 # 图片的绝对路径
-client.upload_by_filename('/Users/mac/Desktop/img/superwoman.jpg')
+# client.upload_by_filename('/Users/mac/Desktop/img/superwoman.jpg')
 
 # 3.获取file_id   upload_by_filename上传成功会返回字典数据 字典数据中有file_id
 
 
+# 首页商品展示的实现
+from django.views import View
+from utils.goods import get_categories
+from apps.contents.models import ContentCategory
+class IndexView(View):
+    def get(self, request):
+        """
+        首页的数据分为2部分：
+        1部分是商品分类数据
+        2部分是广告数据
+        """
+        # 1.商品数据
+        categories = get_categories()
+        # 2.广告数据
+        contents = {}
+        content_categories = ContentCategory.objects.all()
+        for cat in content_categories:
+            contents[cat.key] = cat.content_set.filter(status=True).order_by('sequence')
+
+        # 我们的首页后面会讲解 页面静态化
+        # 我们将数据 传递给模版---这里是首页渲染去实现的
+        context = {
+            'categories': categories,
+            'contents': contents,
+
+        }
+        # 模版使用比较少，以后到公司自然就会了
+        return render(request, 'index.html', context)
 
 
 

@@ -45,7 +45,8 @@ INSTALLED_APPS = [
     'apps.oauth',
     'apps.areas',
     'apps.goods',
-    'apps.contents'
+    'apps.contents',
+
 
 ]
 
@@ -68,7 +69,8 @@ ROOT_URLCONF = 'meiduo_mail.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        # 配置模版路径
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
