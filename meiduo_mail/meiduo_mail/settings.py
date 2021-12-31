@@ -264,7 +264,8 @@ EMAIL_HOST_PASSWORD = 'tkvskmcpteqreceg'
 # 收件人看到的发件人
 EMAIL_FROM = '美多商城<王爽 1747709835@qq.com>'
 
-
+# ------------------------加载自定义文件存储类-----------------
+DEFAULT_FILE_STORAGE = 'utils.fastdfs.storage.MyStorage'
 
 
 
