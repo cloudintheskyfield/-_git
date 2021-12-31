@@ -291,6 +291,7 @@
 
             <ul class="goods_type_list clearfix">
                 <li v-for="sku in skus">
+<!--                    这里的default_image_url，name，price为需要后端返回的数据-->
                     <a :href="sku.url"><img :src="sku.default_image_url"></a>
                     <h4><a :href="sku.url">[[sku.name]]</a></h4>
                     <div class="operate">

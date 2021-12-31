@@ -7,7 +7,7 @@ from django.core.files.storage import Storage
 # 3.Your storage class must implement the _open() and _save() methods,
 # along with any other methods appropriate to your storage class
 
-# 自定义文件存储类
+# 自定义文件存储类 可以访问到渲染的templates 主页
 class MyStorage(Storage):
     def open(self, name, mode='rb'):
         """Retrieve the specified file from storage."""

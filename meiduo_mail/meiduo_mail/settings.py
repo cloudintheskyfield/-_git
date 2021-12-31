@@ -46,6 +46,9 @@ INSTALLED_APPS = [
     'apps.areas',
     'apps.goods',
     'apps.contents',
+    # haystack
+    'haystack',
+
 
 
 ]
@@ -266,6 +269,32 @@ EMAIL_FROM = '美多商城<王爽 1747709835@qq.com>'
 
 # ------------------------加载自定义文件存储类-----------------
 DEFAULT_FILE_STORAGE = 'utils.fastdfs.storage.MyStorage'
+
+
+# --------------对接haystack--------------elasticsearch的配置
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        'ENGINE': 'haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine',
+        'URL': 'http://192.168.1.6:9200/',
+        'INDEX_NAME': 'haystack',
+    },
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

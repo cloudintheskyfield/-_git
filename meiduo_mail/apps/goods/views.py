@@ -130,6 +130,7 @@ class ListView(View):
         # 将对象转换为字典数据
         sku_list = []
         for sku in page_skus.object_list:
+            # sku列表中的这几个元素可以在前端的html中看到
             sku_list.append({
                 'id': sku.id,
                 'name': sku.name,
@@ -147,3 +148,52 @@ class ListView(View):
             'breadcrumb': breadcrumb,
 
         })
+
+
+# TODO 热销排行
+
+# ##############################搜索功能的实现#################
+"""
+搜索：
+1.不实用like
+2.使用全文检索
+3.全文检索需要配合搜索引擎来实现
+4.搜索引擎
+
+原理：对数据进行拆分
+我爱北京天安门                 我爱，北京，天安门
+王红姑娘，我内里挂念你             王红姑娘，我爱你，睡不着觉，挂念你
+我夜里睡不着觉                 我，睡不着觉，夜里
+
+5.Elasticsearch
+进行分词操作，将一句话拆分为多个单词或字
+6.数据  <--------Haystack---------> elasticsearch
+
+"""
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
