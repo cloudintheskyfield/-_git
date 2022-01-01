@@ -7,7 +7,7 @@ from apps.goods.models import GoodsChannel
 """
 def get_categories():
 
-    # 定义一个有序字典对象
+    # 定义一个有序字典对象，有序字典为内置的包
     categories = OrderedDict()
 
     # 对 GoodsChannel 进行 group_id 和 sequence 排序, 获取排序后的结果:
