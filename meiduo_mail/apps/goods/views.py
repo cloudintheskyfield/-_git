@@ -253,3 +253,24 @@ class DetailView(View):
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
