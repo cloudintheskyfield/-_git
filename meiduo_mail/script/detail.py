@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+"""该面为了处理商品详情页面"""
 # 设置django的环境
 import sys
 # 到我们的BASE_DIR下面 --- detail的上级目录
