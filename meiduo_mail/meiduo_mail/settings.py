@@ -267,7 +267,8 @@ EMAIL_HOST_PASSWORD = 'tkvskmcpteqreceg'
 # 收件人看到的发件人
 EMAIL_FROM = '美多商城<王爽 1747709835@qq.com>'
 
-# ------------------------加载自定义文件存储类-----------------
+# ------------默认文件存储类------------加载自定义文件存储类-----------------
+# 此处声明后，可以直接调用类中的方法进行，使用
 DEFAULT_FILE_STORAGE = 'utils.fastdfs.storage.MyStorage'
 
 
@@ -275,11 +276,12 @@ DEFAULT_FILE_STORAGE = 'utils.fastdfs.storage.MyStorage'
 HAYSTACK_CONNECTIONS = {
     'default': {
         'ENGINE': 'haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine',
-        'URL': 'http://192.168.1.6:9200/',
-        'INDEX_NAME': 'haystack',
+        'URL': 'http://192.168.1.6:9200/',      # elasticsearch服务器运行的ip地址 排除服务器问题
+        'INDEX_NAME': 'haystack',           # 指定elasticsearch建立的索引库的名称
     },
 }
-
+# 当添加，修改，删除数据的时候，自动生成索引
+HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
 
 
 

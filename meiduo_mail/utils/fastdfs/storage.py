@@ -23,6 +23,6 @@ class MyStorage(Storage):
         pass
 
     def url(self, name):
-        # TODO修改域名优化访问速度
+        # TODO 修改域名优化访问速度
         return 'http://192.168.1.6:8888/' + name
 

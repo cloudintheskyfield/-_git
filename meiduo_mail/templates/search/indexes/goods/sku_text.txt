@@ -1,5 +1,7 @@
 # 模版指定字段
 # object如何理解，object代表着要检索的模型实例
+# 该处为等待检索的数据
+# 由该处的关键字进行查询
 {{ object.name }}
 {{ object.caption }}
 {{ object.id }}

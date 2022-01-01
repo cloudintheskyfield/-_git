@@ -1,6 +1,7 @@
 var vm = new Vue({
     el: '#app',
     delimiters: ['[[', ']]'], // 修改vue模板符号，防止与django冲突
+    // 下面的数据就是可以在前端中接收的数据
     data: {
         host: host,
         username: '',
@@ -13,7 +14,7 @@ var vm = new Vue({
         count: 0,  // 总数量
         skus: [], // 数据
         cat1: {url: '',name:''},  // 一级类别
-        cat2: {name:''},  // 二级类别
+        cat2: {name:''},  // 二  级类别
         cat3: {name:''},  // 三级类别,
         cart_total_count: 0, // 购物车总数量
         carts: [], // 购物车数据
@@ -107,6 +108,7 @@ var vm = new Vue({
         get_skus: function(){
             var url = this.host+'/list/'+this.cat+'/skus/'
             axios.get(url, {
+                    // 这几个参数为后端可以获取的数据
                     params: {
                         page: this.page,
                         page_size: this.page_size,

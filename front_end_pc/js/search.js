@@ -103,14 +103,17 @@ var vm = new Vue({
                     withCredentials:true,
                 })
                 .then(response => {
+                    // 将结果遍历到skus的列表中
                     this.skus = [];
                     // this.count = response.data.count;
                     this.count = 0
+                    // 该处只要一个结果不需要code和errmsg
                     var results = response.data;
                     for(var i=0; i< results.length; i++){
                         var sku = results[i];
                         sku.url = '/goods/' + sku.id + ".html";
                         this.searchkey = sku.searchkey
+                        // sku后端不需要
                         this.skus.push(sku);
                         this.page_size = sku.page_size;
                         this.count += sku.count

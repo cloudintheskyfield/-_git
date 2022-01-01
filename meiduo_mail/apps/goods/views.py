@@ -103,6 +103,7 @@ from apps.goods.models import GoodsCategory, SKU
 from utils.goods import get_breadcrumb
 
 
+# 显示手机页面的数据
 class ListView(View):
     def get(self, request, category_id):
         # 1.接收参数
@@ -112,32 +113,36 @@ class ListView(View):
         page_size = request.GET.get('page_size')
         # 第几页数据
         page = request.GET.get('page')
-        # 2.获取分类id
+        # 2.获取分类id---在路由中
         # 3.根据分类id进行数据的查询验证
         try:
             category = GoodsCategory.objects.get(id=category_id)
         except GoodsCategory.DoesNotExist:
             return JsonResponse({'code': 400, 'errmsg': '参数缺失'})
-        # 4.获取面包屑数据
+        # 4.获取面包屑数据---面包屑数据需要传入一个商品对象（面包屑会进行判断是否存在父级对象）
         breadcrumb = get_breadcrumb(category)
-        # 5.查询分类对应的sku数据，然后排序，然后分页
-        skus = SKU.objects.filter(category=category, is_launched=True).order_by(ordering)
+        # 5.根据 分类 查询对应的sku数据，然后排序，然后分页
+        # 该处为三级分类中查询到的对应的手机页面
+        skus = SKU.objects.filter(category_id=category.id, is_launched=True).order_by(ordering)
         # 分页
         from django.core.paginator import Paginator
-        paginator = Paginator(skus, per_page=page_size)
-        # 第几页
+        # paginator对象的建立
+        paginator = Paginator(skus, per_page=page_size) # skus为数据，page_size为每页数据多少条
+        # 第几页---返回当前页的信息---一个page对象建立
         page_skus = paginator.page(page)
         # 将对象转换为字典数据
         sku_list = []
+        # page_skus.object_list 为当前页上所有数据的列表
         for sku in page_skus.object_list:
             # sku列表中的这几个元素可以在前端的html中看到
             sku_list.append({
                 'id': sku.id,
                 'name': sku.name,
                 'price': sku.price,
+                # 该处的sku.default_image.url访问默认存储类的url方法
                 'default_image_url': sku.default_image.url
             })
-        # 获取总页码
+        # 获取总页码  分页后的页面总数 ---有几页 paginator.num+pages固定写法
         total_num = paginator.num_pages
         # 6.返回响应
         return JsonResponse({
@@ -171,29 +176,36 @@ class ListView(View):
 
 """
 
+"""
+数据《---haystack---》elasticsearch
+借助于haystack帮助我们查询数据
+"""
+from haystack.views import SearchView
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# 该搜索类继承自SearchView没有as_view()方法
+# TODO 前端中搜索点击有问题，只能回车键
+class SKUSearchView(SearchView):
+    # 该方法取自SearchView中的源码
+    def create_response(self):
+        # 获取搜索的结果---抄写SearchView中的源代码，产生响应返回给服务器
+        # 理解为context为 haystack 对接 elasticSearch后查询到的 响应结果
+        context = self.get_context()
+        # 该如何知道context中有那些数据呢
+        # 添加断点来进行分析---调试问题，解决问题
+        sku_list = []
+        # 利用断点查到 获取商品列表为 context['page'].object_list
+        for sku in context['page'].object_list:
+            sku_list.append({
+                # 前4个为context下page中的内容
+                'id': sku.object.id,
+                'name': sku.object.name,
+                'price': sku.object.price,
+                # 该处的url为访问fastfds中storage的方法
+                'default_image_url': sku.object.default_image.url,
+                # 下面三个为context下的内容---------------------------
+                'searchkey': context.get('query'),
+                'page_size': context['page'].paginator.num_pages,       # 当前页面页码
+                'count': context['page'].paginator.count            # 查询到的结果数量
+            })
+        # 这里后端需求的数据中，只需求了相关数据，并没有要求code和errmsg
+        return JsonResponse(sku_list, safe=False)
