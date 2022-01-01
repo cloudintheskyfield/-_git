@@ -183,7 +183,6 @@ class ListView(View):
 from haystack.views import SearchView
 
 # 该搜索类继承自SearchView没有as_view()方法
-# TODO 前端中搜索点击有问题，只能回车键
 class SKUSearchView(SearchView):
     # 该方法取自SearchView中的源码
     def create_response(self):
