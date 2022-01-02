@@ -1,6 +1,7 @@
 from django.urls import path
 from apps.users.views import UsernameCountView, RegisterView, LoginView, LogoutView, CenterView, EmailView, \
-    EmailVerifyView, AddressCreateView, AddressView, AddressTitleView, AddressDefaultView, PasswordChangeView
+    EmailVerifyView, AddressCreateView, AddressView, AddressTitleView, AddressDefaultView, PasswordChangeView,\
+    UserHistoryView
 from apps.users.views import PhoneNumberCountView
 
 """使用POSTman进行测试的时候需要根据下面的路由进行测试"""
@@ -42,7 +43,10 @@ urlpatterns = [
     # 修改地址   删除地址
     path('addresses/<address_id>/', AddressCreateView.as_view()),
     # 修改密码
-    path('password/', PasswordChangeView.as_view())
+    path('password/', PasswordChangeView.as_view()),
+
+    # 浏览历史记录
+    path('browse_histories/', UserHistoryView.as_view()),
 
 
 ]

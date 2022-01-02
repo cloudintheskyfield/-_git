@@ -260,6 +260,7 @@ class LoginView(View):
     
 """
 
+
 # 退出登录 的类视图
 class LogoutView(View):
     # 该处定义名称的时候定义get/ post/ put等等 按照规则
@@ -623,7 +624,6 @@ class AddressCreateView(LoginRequiredJSOMixin, View):
         # 4.返回响应
         return JsonResponse({'code': 0, 'message': 'modify address is ok', 'address': address_dict})
 
-
     def delete(self, request, address_id):
         # 1.获取数据
         # 2.查询数据
@@ -708,7 +708,6 @@ class PasswordChangeView(LoginRequiredJSOMixin, View):
         from django.contrib.auth import authenticate
         user = authenticate(username=user.username, password=old_password)
 
-
         if not user:
             return JsonResponse({'code': 400, 'errmsg': '密码输入不正确，请重新尝试'})
         if new_password != new_password2:
@@ -720,3 +719,81 @@ class PasswordChangeView(LoginRequiredJSOMixin, View):
         #           password: pbkdf2_sha256$150000$uIwuwgLSRRmU$P7tLdTHEP7SSpmts1TeMs8+9u01172g6ahCIle1/i6Q=
         # 5.返回响应
         return JsonResponse({'code': 0, 'errmsg': 'set password is ok'})
+
+
+########################## 最近浏览记录 #################
+"""
+一 根据页面效果，分析需求
+    1.最近浏览记录 只有登录用户才可以访问 只记录登录用户的浏览信息
+    2.浏览记录应该有顺序
+    3.没有分页
+
+二 功能
+    功能：
+        1：在用户访问商品详情的时候，添加浏览记录
+        2：在个人中心，展示浏览记录
+
+三 具体分析
+    问题1：保存那些数据？用户id，商品id，顺序（访问时间）---根据商品id来进行查询
+    问题2：保存在哪里？一般要保存在数据库（缺点：慢，会频繁操作数据库）
+                    最好保存在redis中
+        保存在两个库中都可以，看公司具体的安排，服务器内存比较大，mysql + redis
+    
+    user_id,sku_id,顺序
+        
+    redis： 5中数据类型
+    key：value
+    
+    string：x
+    hash：x
+    list：v（去重，不能重复）
+    set：x
+    zset：权重：值
+"""
+"""
+添加浏览记录：
+    前端：当登录用户，访问某一个具体SKU页面的时候，发送一个axios请求，请求携带sku_id
+    后端：
+        请求：接收请求，获取请求参数，验证参数
+        业务逻辑：连接redis，先去重，再保存到redis中，redis中只保存5条记录
+        响应：返回JSON
+        路由： POST browse_histories
+        步骤：
+            1：接收请求
+            2：获取请求参数
+            3：验证参数
+            4：连接redis       list
+            5：去重
+            6：保存到redis中
+            7：只保存5条记录
+            8：返回响应
+"""
+# 添加 用户浏览商品记录
+from apps.goods.models import SKU
+class UserHistoryView(LoginRequiredJSOMixin, View):
+    def post(self, request):
+        user = request.user
+        # 1：接收请求
+        data = json.loads(request.body.decode())
+        # 2：获取请求参数
+        sku_id = data.get('sku_id')
+        # 3：验证参数
+        try:
+            sku = SKU.objects.get(id=sku_id)
+        except SKU.DoesNotExist:
+            return JsonResponse({'code': 400, 'errmsg': '没有此商品'})
+
+        # 4：连接redis
+        from django_redis import get_redis_connection
+        redis_cli = get_redis_connection('history')
+        # list
+        # 5：去重(先删除再保存）
+        try:
+            redis_cli.lrem('history_%s' % user.id, sku_id)
+        finally:
+            # 6：保存到redis中
+            redis_cli.lpush('history_%s' % user.id, sku_id)
+            # 7：只保存5条记录
+            redis_cli.ltrim('history_%s' % user.id, 0, 4)
+            # 8：返回响应
+            return JsonResponse({'code': 0, 'errmsg': 'ok'})

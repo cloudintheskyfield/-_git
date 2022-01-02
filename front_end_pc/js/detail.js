@@ -37,6 +37,7 @@ var vm = new Vue({
         this.get_sku_id();
 
         axios.post(this.host+'/browse_histories/', {
+            // 用户可以拿到的数据
             sku_id: this.sku_id
         },{
                 responseType: 'json',
