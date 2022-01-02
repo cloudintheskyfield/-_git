@@ -1,5 +1,5 @@
 from django.urls import path
-from apps.goods.views import IndexView, ListView, SKUSearchView, DetailView
+from apps.goods.views import IndexView, ListView, SKUSearchView, DetailView, CategoryVisitCountView
 urlpatterns = [
     # 商品首页
     path('index/', IndexView.as_view()),
@@ -9,6 +9,9 @@ urlpatterns = [
     path('search/', SKUSearchView()),
     #
     path('detail/<sku_id>/', DetailView.as_view()),
+    # 商品访问次数的路由
+    path('detail/visit/<category_id>/', CategoryVisitCountView.as_view()),
+
 
 
 ]

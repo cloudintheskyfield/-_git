@@ -269,8 +269,33 @@ class DetailView(View):
         6.返回响应
         
 """
-
-
+from apps.goods.models import GoodsVisitCount
+from _datetime import date
+class CategoryVisitCountView(View):
+    """一天之内，某个三级分类 商品的访问量"""
+    def post(self, request, category_id):
+        # 1.接收分类id
+        # 2.验证参数
+        try:
+            category = GoodsCategory.objects.get(id=category_id)
+        except GoodsCategory.DoesNotExist:
+            return JsonResponse({'code':400, 'errmsg': '没有此分类'})
+        # 3.查询当天 这个分类的记录有没有 显示今天的日期
+        today = date.today()
+        try:
+            gvc = GoodsVisitCount.objects.get(category=category, date=today)
+        except GoodsVisitCount.DoesNotExist:
+            # 4.没有创建数据
+            GoodsVisitCount.objects.create(category=category,
+                                           date=today,
+                                           count=1)
+        else:
+            # 5.有的话更新数据
+            gvc.count+=1
+            gvc.save()
+        # 6.返回响应
+        return JsonResponse({'code':0, 'errmsg':'ok'})
+        pass
 
 
 
