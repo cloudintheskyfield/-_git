@@ -770,6 +770,8 @@ class PasswordChangeView(LoginRequiredJSOMixin, View):
 """
 # 添加 用户浏览商品记录
 from apps.goods.models import SKU
+from django_redis import get_redis_connection
+
 class UserHistoryView(LoginRequiredJSOMixin, View):
     def post(self, request):
         user = request.user
@@ -784,12 +786,11 @@ class UserHistoryView(LoginRequiredJSOMixin, View):
             return JsonResponse({'code': 400, 'errmsg': '没有此商品'})
 
         # 4：连接redis
-        from django_redis import get_redis_connection
         redis_cli = get_redis_connection('history')
         # list
         # 5：去重(先删除再保存）
         try:
-            redis_cli.lrem('history_%s' % user.id, sku_id)
+            redis_cli.lrem('history_%s' % user.id, 0, sku_id)
         finally:
             # 6：保存到redis中
             redis_cli.lpush('history_%s' % user.id, sku_id)
@@ -797,3 +798,40 @@ class UserHistoryView(LoginRequiredJSOMixin, View):
             redis_cli.ltrim('history_%s' % user.id, 0, 4)
             # 8：返回响应
             return JsonResponse({'code': 0, 'errmsg': 'ok'})
+
+    def get(self, request):
+        # 1.连接redis
+        redis_cli = get_redis_connection('history')
+        # 2.获取redis数据
+        ids = redis_cli.lrange('history_%s' % request.user.id, 0,4)
+        # 3.根据商品id进行数据查询
+        history_list = []
+        for sku_id in ids:
+            sku = SKU.objects.get(id=sku_id)
+            # 4.将对象转化为字典
+            history_list.append({
+                'id':sku.id,
+                'name':sku.name,
+                'default_image_url':sku.default_image.url,
+                'price':sku.price,
+            })
+        # 5.返回JSON
+        return JsonResponse({'code':0, 'errmsg': 'set display history is ok', 'skus':history_list})
+
+"""
+展示用户浏览记录
+    前端：
+        用户在访问浏览记录的时候，会发送axios请求，请求会携带session信息
+    后端：
+        请求：
+        业务逻辑：连接redis，获取redis数据（获取商品id），根据商品id进行查询，将对象转化为字典
+                根据商品id进行数据查询
+        响应：JSON
+        路由：GET 与添加 浏览记录的路由相同
+        步骤：
+            1.连接redis
+            2.获取redis数据
+            3.根据商品id进行数据查询
+            4.将对象转化为字典
+            5.返回JSON
+"""
