@@ -59,7 +59,10 @@ urlpatterns = [
     # 导入area的路由
     path('', include('apps.areas.urls')),
     # goods的url
-    path('', include('apps.goods.urls'))
+    path('', include('apps.goods.urls')),
+    # carts
+    path('', include('apps.carts.urls')),
+
 
 ]
 
