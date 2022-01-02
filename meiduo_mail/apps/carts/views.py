@@ -101,7 +101,6 @@ class CartsView(View):
     业务逻辑：
 
     """
-
     def post(self, request):
         # 1.接收数据
         data = json.loads(request.body.decode())
@@ -118,6 +117,7 @@ class CartsView(View):
         except Exception as e:
             print(e)
             count = 1
+
         # 3.更新数据（数据入库，看看数据库中是否有该商品，有的话不能添加，存储到redis）（登录用户redis，未登录用户cookie）
         # 3.0 判断用户的登录状态
         user = request.user
@@ -132,13 +132,34 @@ class CartsView(View):
             redis_cli.sadd('selected_%s' % user.id, sku_id)
             # 返回响应
             return JsonResponse({'code': 0, 'errmsg': 'set carts is ok for login user'})
+
         else:  # 未认证用户
             # 3.5 未登录用户保存到cookie
-            # 3.6 现有cookie字典
-            carts = {
-                sku_id: {'count': count, 'selected': True}
+            # 3.55 先读取cookie数据，判断新增的商品有咩有在购物车中  ------先判断cookie中有没有数据
+            cookie_carts = request.COOKIES.get('carts')
+            if cookie_carts:  # 有数据的话，转换为正常的数据
+                carts = pickle.loads(base64.b64decode(cookie_carts))
+            else:  # 没有数据的话，建立一个新的空字典
+                # 3.6 现有cookie字典
+                carts = {
+
+                }
+            if sku_id in carts:  # 判断加入购物车的商品的id是否在购物车中
+                # 购物车中已经有商品id   在购物车中的话要改变 商品的count  没有在购物车中的话，直接赋值count即可
+                origin_count = carts[sku_id]['count']
+                count += origin_count
+                # carts[sku_id] = {
+                #     'count': count,
+                #     'selected': True,
+                #
+                # }
+
+            # 购物车没有商品，不管在不再购物车中，都要对字典进行改变的操作
+            carts[sku_id] = {
+                'count': count,
+                'selected': True
             }
-            # 3.7 字典转化为bytes
+            # 3.7 字典转化为bytes（再加密字典）
             carts_bytes = pickle.dumps(carts)
             # 3.8 bytes类型用base64重新编码
             base64encode = base64.b64encode(carts_bytes)
