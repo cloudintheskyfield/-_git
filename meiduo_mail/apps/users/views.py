@@ -234,6 +234,8 @@ class LoginView(View):
         # 4.session 登录状态保持
         login(request, user)
 
+
+
         # 5.判断是否记住登录
         if remembered is True:
             # 记住登录---记住后直接自动登录，不需要用户再去自行手动设置
@@ -246,6 +248,10 @@ class LoginView(View):
         # 6.设置cookie 并返回响应
         # 为了首页显示用户信息-----------------
         response.set_cookie('username', username)  # 不设置max_age= 默认会话结束之后
+
+        # 6.5 必须是登录后 还得有response
+        from apps.carts.utils import merge_cookie_to_redis
+        response = merge_cookie_to_redis(request, response)
         return response
 
 
