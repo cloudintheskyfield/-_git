@@ -13,6 +13,7 @@ var vm = new Vue({
         nowsite:0, // 默认地址
         addresses: []
     },
+    // 页面挂着的时候会发送请求
     mounted: function(){
         this.username = getCookie('username')
 

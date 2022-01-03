@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'haystack',
     # 定时任务django_crontab
     'django_crontab',
+    'apps.orders'
 
 
 

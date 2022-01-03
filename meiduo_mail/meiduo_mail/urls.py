@@ -62,6 +62,8 @@ urlpatterns = [
     path('', include('apps.goods.urls')),
     # carts
     path('', include('apps.carts.urls')),
+    # orders
+    path('', include('apps.orders.urls')),
 
 
 ]
