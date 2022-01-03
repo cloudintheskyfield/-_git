@@ -1,3 +1,5 @@
+import json
+
 from django.http import JsonResponse
 from django.shortcuts import render
 
@@ -114,6 +116,143 @@ class OrderSettlementView(LoginRequiredJSOMixin, View):
         return JsonResponse({'code': 0, 'errmsg': 'ok', 'context': context})
         pass
 
+
+"""
+需求：点击提交订单，生成订单
+前端：发送axios请求，POST 携带数据给后端
+后端：
+    请求：接收请求，验证数据
+    业务逻辑：数据入库
+    响应：返回响应
+    路由：POST
+    步骤：
+        1.接收数据  前端需要传user,address_id, pay_method 
+        2.验证数据
+        order_id为主键自己生成
+        拿取总数量/总金额的时候，需要遍历redis拿取数据。在后面遍历的时候改变这两个值！先赋值0
+        total_count,total_amount,freight
+        支付状态由支付方式来决定的
+        
+        3.数据入库  生成订单（订单基本信息表和订单商品信息表）
+            订单基本信息表
+            订单商品信息表
+            3.1 先订单基本信息，再商品信息---有基本信息的外键（先基本信息）
+            
+            3.2 订单商品信息
+            3.3 连接redis
+            3.4 获取hash
+            3.5 获取set
+            3.6 最好重新组织一个数据，这个数据为选中的商品信息
+            3.7 根据选中商品的id进行查询
+            4.8 判断库存是否充足
+            4.9 如果充足，库存减少，销量增加
+            5.0 如果不充足，下单失败
+            
+            5.1 累加总数量和总金额
+            
+            5.2 保存订单商品信息
+            5.3 更新订单的总金额和总数量
+            
+            5.4 将redis中选中的商品信息移除
+        6.返回响应
+    
+"""
+from apps.orders.models import OrderInfo
+class OrderCommitView(LoginRequiredJSOMixin, View):
+    def post(self,request):
+        user = request.user
+        # 1.接收数据
+        data = json.loads(request.body.decode())
+        # 前端需要传user, address_id, pay_method
+        address_id = data.get('address_id')
+        pay_method = data.get('pay_method')
+
+        # 2.验证数据
+        if not all([address_id, pay_method]):
+            return JsonResponse({'code':400, 'errmsg': '参数不全'})
+        try:
+            address = Address.objects.get(id=address_id)
+        except Address.DoesNotExist:
+            return JsonResponse({'code':400, 'errmsg': '地址不正确'})
+        # 这样写没有问题，就是代码的可读性差
+        # if pay_method not in [1,2]:
+        if pay_method not in [OrderInfo.PAY_METHODS_ENUM['CASH'], OrderInfo.PAY_METHODS_ENUM['ALIPAY']]:
+            return JsonResponse({'code':400, 'errmsg': '参数不正确'})
+
+        # order_id为主键自己生成
+        from django.utils import timezone
+        from datetime import datetime
+        # datetime.strftime() 与下面的效果一样
+        # Year month day Hour Minutes Second %f为毫秒  订单id根据现在的时间来生成+用户id
+        order_id = timezone.localtime().strftime('%Y%m%d%H%M%S') + '%09d' % user.id
+
+        #     拿取总数量 / 总金额的时候，需要遍历redis拿取数据。在后面遍历的时候改变这两个值！先赋值0
+        #     total_count, total_amount, freight
+        #     支付状态由支付方式来决定的
+        # if pay_method == 1:    # 货到付款
+        #     pay_status = 2
+        if pay_method == OrderInfo.PAY_METHODS_ENUM['CASH']:
+            status = OrderInfo.ORDER_STATUS_ENUM['UNSEND']
+        else:
+            status = OrderInfo.ORDER_STATUS_ENUM['UNPAID']
+        # 总数量，总金额，运费
+        from decimal import Decimal
+        total_count = 0
+        total_amount = Decimal('0')  # 总金额
+        freight = Decimal('10.00')
+
+        # 3.数据入库
+        # 1.订单基本信息表 生成订单（订单基本信息表和订单商品信息表）
+        OrderInfo.objects.create(
+            order_id = order_id,
+            user = user,
+            address = address,
+            total_count = total_count,
+            total_amount = total_amount,
+            freight = freight,
+            pay_method = pay_method,
+            status = status,
+        )
+
+        #
+        #     订单商品信息表
+        #     3.1
+        #     先订单基本信息，再商品信息 - --有基本信息的外键（先基本信息）
+        #
+        #     3.2
+        #     订单商品信息
+        #     3.3
+        #     连接redis
+        #     3.4
+        #     获取hash
+        #     3.5
+        #     获取set
+        #     3.6
+        #     最好重新组织一个数据，这个数据为选中的商品信息
+        #     3.7
+        #     根据选中商品的id进行查询
+        #     4.8
+        #     判断库存是否充足
+        #     4.9
+        #     如果充足，库存减少，销量增加
+        #     5.0
+        #     如果不充足，下单失败
+        #
+        #     5.1
+        #     累加总数量和总金额
+        #
+        #     5.2
+        #     保存订单商品信息
+        #     5.3
+        #     更新订单的总金额和总数量
+        #
+        #     5.4
+        #     将redis中选中的商品信息移除
+        #
+        # 6.
+        # 返回响应
+
+        pass
 
 
 
