@@ -100,6 +100,7 @@ class CartsView(View):
     前端：用户点击添加购物车，前端发送一个axios请求给后端
     业务逻辑：
     """
+    # 添加商品到购物车
     def post(self, request):
         # 1.接收数据
         data = json.loads(request.body.decode())
@@ -192,7 +193,7 @@ class CartsView(View):
     5. 将对象数据转换为字典数据
     6. 返回响应
     """
-
+    # 购物车的展示
     def get(self, request):
         # 1.判断用户是否登录
         user = request.user
@@ -258,7 +259,9 @@ class CartsView(View):
     5.8 返回响应
     
     """
+    # 修改购物车
     def put(self, request):
+
         user = request.user
         # 1.获取用户信息
         data = json.loads(request.body.decode())
@@ -320,6 +323,65 @@ class CartsView(View):
             return response
         pass
 
+    """
+    1.接收请求
+    2.验证参数
+    3.根据用户登录状态
+    4.登录用户操作redis
+    4.1 连接redis
+    4.2 hash
+    4.3 set
+    4.4 返回响应
+    5.未登录用户操作cookie
+    5.1 读取cookie中的购物车数据
+    5.2 判断数据是否存在，存在则解码
+    5.3 不存在初始化字典
+    5.4 删除数据
+    5.5 对字典数据进行base64和加密处理
+    5.6 设置cookie
+    5.7 返回响应
+    """
+    def delete(self, request):
+        user = request.user
+        # 1.接收请求
+        data = json.loads(request.body.decode())
+        # 2.验证参数
+        sku_id = data.get('sku_id')
+        # 3.根据用户登录状态
+        try:
+            SKU.objects.get(pk=sku_id)  # pk ---> primary key
+        except SKU.DoesNotExist:
+            return JsonResponse({'code': 400, 'errmsg': '没有此商品'})
+        # 4.登录用户操作redis
+        if user.is_authenticated:
+            # 4.1 连接redis
+            redis_cli = get_redis_connection('carts')
+            # 4.2 hash
+            redis_cli.hdel('carts_%s' % user.id, sku_id)
+            # 4.3 set
+            redis_cli.srem('selected_%s' % user.id, sku_id)
+            # 4.4 返回响应
+            return JsonResponse({'code': 0, 'errmsg': 'ok'})
+        else:
+            # 5.未登录用户操作cookie
+            # 5.1 读取cookie中的购物车数据
+            cookie_cart = request.COOKIES.get('carts')
+            # 5.2 判断数据是否存在，存在则解码
+            if cookie_cart is not None:
+                carts = pickle.loads(base64.b64decode(cookie_cart))
+            # 5.3 不存在初始化字典
+            else:
+                carts = {}
+            # 5.4 删除数据
+            del carts[sku_id]
+            # 5.5 对字典数据进行base64和加密处理
+            new_carts = base64.b64encode(pickle.dumps(carts))
+            # 5.6 设置cookie
+            response = JsonResponse({'code':0, 'errmsg': 'ok'})
+            response.set_cookie('carts', new_carts.decode(), max_age=3600*24*14)
+            # 5.7 返回响应
+            return response
+        pass
 
 
 
