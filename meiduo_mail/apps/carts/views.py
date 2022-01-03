@@ -125,11 +125,19 @@ class CartsView(View):
             # 3.1 登录用户保存redis
             # 3.2 连接redis
             redis_cli = get_redis_connection('carts')
+            pipeline = redis_cli.pipeline()  # 设置pipline后，pipline就相当于redis_cli，注意此处为pipeline
+
+            # 3.25 累加的操作
+            pipeline.hincrby('carts_%s' % user.id, sku_id, count)
+
             # 3.3 操作hash hset key key value ------ carts_user.id    sku_id   count
-            redis_cli.hset('carts_%s' % user.id, sku_id, count)
+            # redis_cli.hset('carts_%s' % user.id, sku_id, count)
             # 3.4 操作set（不能重复）（没有顺序，不能修改, string类型）
             # 默认选中
-            redis_cli.sadd('selected_%s' % user.id, sku_id)
+            pipeline.sadd('selected_%s' % user.id, sku_id)
+            # 记得执行pipline
+            pipeline.execute()
+
             # 返回响应
             return JsonResponse({'code': 0, 'errmsg': 'set carts is ok for login user'})
 
@@ -203,13 +211,16 @@ class CartsView(View):
 
             sku_id_counts = redis_cli.hgetall('carts_%s' % user.id)  # {sku_id:count, sku_id:count}
             selected_ids = redis_cli.smembers('selected_%s' % user.id)  # {sku_id, sku_id...}
-            # 2.1 将redis数据转换为和cookie格式一样的形式
+
+            # 2.1 将redis数据转换为和cookie格式一样的形式 注意redis中的数据为byte类型的 需要进行数据类型转换
             carts = {}
             for sku_id, count in sku_id_counts.items():
-                carts[sku_id] = {
-                    'count': count,
+                carts[int(sku_id)] = {
+                    # 注意redis中的数据类型为字节
+                    'count': int(count),  # byte---->int
                     'selected': sku_id in selected_ids
                 }
+
             # carts = pickle.loads(carts)
         else:
             # 3.未登录用户操作cookie
@@ -288,13 +299,16 @@ class CartsView(View):
         # 4.登录用户更新redis
             # 4.1连接redis
             redis_cli = get_redis_connection('carts')
+            pipeline = redis_cli.pipeline()
             # 4.2 hash
-            redis_cli.hset('cart_%s' % user.id, sku_id, count)
-            # 4.3 set
+            pipeline.hset('carts_%s' % user.id, sku_id, count)
+            # 4.3 set 选中的时候才会操作set
             if selected:
-                redis_cli.sadd('selected_%s' % user.id, sku_id)
+                pipeline.sadd('selected_%s' % user.id, sku_id)
             else:
-                redis_cli.srem('selected_%s' % user.id, sku_id)
+                pipeline.srem('selected_%s' % user.id, sku_id)
+
+            pipeline.execute()
             # 4.4 返回响应
             return JsonResponse({'code': 0, 'errmsg': 'ok', 'cart_sku': {'count': count, 'selected': selected}})
         # 5.未登录用户更新cookie
