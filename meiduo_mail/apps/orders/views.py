@@ -37,6 +37,8 @@ from django.views import View
 from utils.views import LoginRequiredJSOMixin
 from apps.users.models import Address
 from apps.goods.models import SKU
+
+
 class OrderSettlementView(LoginRequiredJSOMixin, View):
     def get(self, request):
         # 1.获取用户信息
@@ -66,7 +68,7 @@ class OrderSettlementView(LoginRequiredJSOMixin, View):
         # {sku_id: count, sku_id: count}
         # 3.3 set[1, 2]
         pipeline.smembers('selected_%s' % user.id)
-        result = pipeline.execute()     # 在这里接收结果！！！
+        result = pipeline.execute()  # 在这里接收结果！！！
         sku_id_counts = result[0]
         selected_ids = result[1]
 
@@ -78,11 +80,11 @@ class OrderSettlementView(LoginRequiredJSOMixin, View):
 
         # 3.5 根据商品的id 查询商品的具体信息[SKU, SKU..]
         sku_list = []
-        for sku_id,count in selected_carts.items(): # .item()为固定写法
+        for sku_id, count in selected_carts.items():  # .item()为固定写法
             sku = SKU.objects.get(pk=sku_id)  # 根据主键查询
             # 3.6 需要将对象数据转换为字典数据
             sku_list.append({
-                'id':sku.id,
+                'id': sku.id,
                 'name': sku.name,
                 'count': count,
                 'default_image_url': sku.default_image.url,
@@ -109,7 +111,7 @@ class OrderSettlementView(LoginRequiredJSOMixin, View):
         context = {
             'skus': sku_list,
             'addresses': addresses_list,
-            'freight': freight,      # 运费 单独返回
+            'freight': freight,  # 运费 单独返回
 
         }
         # 4.返回响应
@@ -157,9 +159,11 @@ class OrderSettlementView(LoginRequiredJSOMixin, View):
         6.返回响应
     
 """
-from apps.orders.models import OrderInfo
+from apps.orders.models import OrderInfo, OrderGoods
+
+
 class OrderCommitView(LoginRequiredJSOMixin, View):
-    def post(self,request):
+    def post(self, request):
         user = request.user
         # 1.接收数据
         data = json.loads(request.body.decode())
@@ -169,15 +173,15 @@ class OrderCommitView(LoginRequiredJSOMixin, View):
 
         # 2.验证数据
         if not all([address_id, pay_method]):
-            return JsonResponse({'code':400, 'errmsg': '参数不全'})
+            return JsonResponse({'code': 400, 'errmsg': '参数不全'})
         try:
             address = Address.objects.get(id=address_id)
         except Address.DoesNotExist:
-            return JsonResponse({'code':400, 'errmsg': '地址不正确'})
+            return JsonResponse({'code': 400, 'errmsg': '地址不正确'})
         # 这样写没有问题，就是代码的可读性差
         # if pay_method not in [1,2]:
         if pay_method not in [OrderInfo.PAY_METHODS_ENUM['CASH'], OrderInfo.PAY_METHODS_ENUM['ALIPAY']]:
-            return JsonResponse({'code':400, 'errmsg': '参数不正确'})
+            return JsonResponse({'code': 400, 'errmsg': '参数不正确'})
 
         # order_id为主键自己生成
         from django.utils import timezone
@@ -203,57 +207,56 @@ class OrderCommitView(LoginRequiredJSOMixin, View):
 
         # 3.数据入库
         # 1.订单基本信息表 生成订单（订单基本信息表和订单商品信息表）
-        OrderInfo.objects.create(
-            order_id = order_id,
-            user = user,
-            address = address,
-            total_count = total_count,
-            total_amount = total_amount,
-            freight = freight,
-            pay_method = pay_method,
-            status = status,
+        order_info = OrderInfo.objects.create(
+            order_id=order_id,
+            user=user,
+            address=address,
+            total_count=total_count,
+            total_amount=total_amount,
+            freight=freight,
+            pay_method=pay_method,
+            status=status,
         )
 
-        #
-        #     订单商品信息表
-        #     3.1
-        #     先订单基本信息，再商品信息 - --有基本信息的外键（先基本信息）
-        #
-        #     3.2
-        #     订单商品信息
-        #     3.3
-        #     连接redis
-        #     3.4
-        #     获取hash
-        #     3.5
-        #     获取set
-        #     3.6
-        #     最好重新组织一个数据，这个数据为选中的商品信息
-        #     3.7
-        #     根据选中商品的id进行查询
-        #     4.8
-        #     判断库存是否充足
-        #     4.9
-        #     如果充足，库存减少，销量增加
-        #     5.0
-        #     如果不充足，下单失败
-        #
-        #     5.1
-        #     累加总数量和总金额
-        #
-        #     5.2
-        #     保存订单商品信息
-        #     5.3
-        #     更新订单的总金额和总数量
-        #
-        #     5.4
-        #     将redis中选中的商品信息移除
-        #
-        # 6.
-        # 返回响应
+        # 订单商品信息
+        # 3.1 先订单基本信息，再商品信息 - --有基本信息的外键（先基本信息）
+        # 3.2 订单商品信息
+        # 3.3 连接redis
+        redis_cli = get_redis_connection('carts')
+        # 3.4 获取hash   {cart_%s{sku_id:count}} ===》{sku_id:count}
+        sku_id_counts = redis_cli.hgetall('carts_%s' % user.id)
+        # 3.5 获取set [1, 2]
+        selected_ids = redis_cli.smembers('selected_%s' % user.id)
+        # 3.6 最好重新组织一个数据，这个数据为选中的商品信息 {sku_id:count}
+        carts = {}
+        for sku_id in selected_ids:
+            carts[int(sku_id)] = int(sku_id_counts[sku_id])
 
+        # 3.7 根据选中商品的id进行查询
+        for sku_id, count in carts.items():
+            sku = SKU.objects.get(id=sku_id)
+            # 3.8 判断库存是否充足,如果不充足，下单失败
+            if sku.stock < count:
+                return JsonResponse({'code': 400, 'errmsg': '库存不足'})
+            # 3.9 如果充足，库存减少，销量增加
+            sku.stock -= count
+            sku.sales += count
+            sku.save()
+            # 5.1 累加总数量和总金额
+            order_info.total_count += count
+            order_info.total_amount += (count * sku.price + freight)
+            # 5.2 保存订单商品信息
+            OrderGoods.objects.create(
+                order=order_info,
+                sku=sku,
+                count=count,
+                price=sku.price
+            )
+        order_info.save()
+        # 5.4 将redis中选中的商品信息移除(暂缓）
+        # 6.返回响应
+        return JsonResponse({'code': 0, 'errmsg': 'ok', 'order_id': order_id})
         pass
-
 
 
 
