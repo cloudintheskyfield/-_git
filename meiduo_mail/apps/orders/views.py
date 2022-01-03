@@ -87,10 +87,27 @@ class OrderSettlementView(LoginRequiredJSOMixin, View):
                 'price': sku.price,
             })
         # 4.组织前端需要的数据
+        from decimal import Decimal
+        freight = Decimal('10')
+        """
+        decimal：货币类型--->很特殊--->字符串的形式保存数据--->钱方面的一般都是decimal类型
+        
+        01010101
+        整数比较方便保存
+        小数的保存比较 特殊，小数分开存储
+        12.5
+        12 0.5
+        1100 1
+        
+        12.33
+        12 0.33
+        0.33不断乘以2知道得到1，无限循环，会有部分缺失（会省略一部分）
+        """
+
         context = {
             'skus': sku_list,
             'addresses': addresses_list,
-            'freight': 10,      # 运费 单独返回
+            'freight': freight,      # 运费 单独返回
 
         }
         # 4.返回响应
