@@ -160,7 +160,7 @@ class OrderSettlementView(LoginRequiredJSOMixin, View):
     
 """
 from apps.orders.models import OrderInfo, OrderGoods
-
+from django.db import transaction
 
 class OrderCommitView(LoginRequiredJSOMixin, View):
     def post(self, request):
@@ -205,54 +205,65 @@ class OrderCommitView(LoginRequiredJSOMixin, View):
         total_amount = Decimal('0')  # 总金额
         freight = Decimal('10.00')
 
-        # 3.数据入库
-        # 1.订单基本信息表 生成订单（订单基本信息表和订单商品信息表）
-        order_info = OrderInfo.objects.create(
-            order_id=order_id,
-            user=user,
-            address=address,
-            total_count=total_count,
-            total_amount=total_amount,
-            freight=freight,
-            pay_method=pay_method,
-            status=status,
-        )
-
-        # 订单商品信息
-        # 3.1 先订单基本信息，再商品信息 - --有基本信息的外键（先基本信息）
-        # 3.2 订单商品信息
-        # 3.3 连接redis
-        redis_cli = get_redis_connection('carts')
-        # 3.4 获取hash   {cart_%s{sku_id:count}} ===》{sku_id:count}
-        sku_id_counts = redis_cli.hgetall('carts_%s' % user.id)
-        # 3.5 获取set [1, 2]
-        selected_ids = redis_cli.smembers('selected_%s' % user.id)
-        # 3.6 最好重新组织一个数据，这个数据为选中的商品信息 {sku_id:count}
-        carts = {}
-        for sku_id in selected_ids:
-            carts[int(sku_id)] = int(sku_id_counts[sku_id])
-
-        # 3.7 根据选中商品的id进行查询
-        for sku_id, count in carts.items():
-            sku = SKU.objects.get(id=sku_id)
-            # 3.8 判断库存是否充足,如果不充足，下单失败
-            if sku.stock < count:
-                return JsonResponse({'code': 400, 'errmsg': '库存不足'})
-            # 3.9 如果充足，库存减少，销量增加
-            sku.stock -= count
-            sku.sales += count
-            sku.save()
-            # 5.1 累加总数量和总金额
-            order_info.total_count += count
-            order_info.total_amount += (count * sku.price + freight)
-            # 5.2 保存订单商品信息
-            OrderGoods.objects.create(
-                order=order_info,
-                sku=sku,
-                count=count,
-                price=sku.price
+        # 使用事务
+        with transaction.atomic():
+            point = transaction.savepoint()  # 事务的开始点/回滚点
+            # 3.数据入库
+            # 1.订单基本信息表 生成订单（订单基本信息表和订单商品信息表）
+            order_info = OrderInfo.objects.create(
+                order_id=order_id,
+                user=user,
+                address=address,
+                total_count=total_count,
+                total_amount=total_amount,
+                freight=freight,
+                pay_method=pay_method,
+                status=status,
             )
-        order_info.save()
+
+            # 订单商品信息
+            # 3.1 先订单基本信息，再商品信息 - --有基本信息的外键（先基本信息）
+            # 3.2 订单商品信息
+            # 3.3 连接redis
+            redis_cli = get_redis_connection('carts')
+            # 3.4 获取hash   {cart_%s{sku_id:count}} ===》{sku_id:count}
+            sku_id_counts = redis_cli.hgetall('carts_%s' % user.id)
+            # 3.5 获取set [1, 2]
+            selected_ids = redis_cli.smembers('selected_%s' % user.id)
+            # 3.6 最好重新组织一个数据，这个数据为选中的商品信息 {sku_id:count}
+            carts = {}
+            for sku_id in selected_ids:
+                carts[int(sku_id)] = int(sku_id_counts[sku_id])
+
+            # 3.7 根据选中商品的id进行查询
+            for sku_id, count in carts.items():
+                sku = SKU.objects.get(id=sku_id)
+                # 3.8 判断库存是否充足,如果不充足，下单失败
+                if sku.stock < count:
+
+                    # 回滚点
+                    transaction.savepoint_rollback(point)
+
+                    return JsonResponse({'code': 400, 'errmsg': '库存不足'})
+                # 3.9 如果充足，库存减少，销量增加
+                sku.stock -= count
+                sku.sales += count
+                sku.save()
+                # 5.1 累加总数量和总金额
+                order_info.total_count += count
+                order_info.total_amount += (count * sku.price + freight)
+                # 5.2 保存订单商品信息
+                OrderGoods.objects.create(
+                    order=order_info,
+                    sku=sku,
+                    count=count,
+                    price=sku.price
+                )
+            order_info.save()
+
+            # 事务的提交点 可以不用写 with语句可以自动提交
+            transaction.savepoint_commit(point)
+
         # 5.4 将redis中选中的商品信息移除(暂缓）
         # 6.返回响应
         return JsonResponse({'code': 0, 'errmsg': 'ok', 'order_id': order_id})
