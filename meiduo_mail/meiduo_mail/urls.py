@@ -64,6 +64,9 @@ urlpatterns = [
     path('', include('apps.carts.urls')),
     # orders
     path('', include('apps.orders.urls')),
+    # alipay
+    path('', include('apps.pay.urls')),
+
 
 
 ]

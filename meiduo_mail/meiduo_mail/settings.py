@@ -321,9 +321,16 @@ CRONJOBS = [
 # 解决crontab中文问题，如果出现非英文字符会出现字符异常错误
 CRONTAB_COMMAND_PREFIX = 'LANG_ALL=zh_cn.UTF-8'
 
+###################### 支付宝支付相关 ######################
+os.path.join(BASE_DIR, '')
+ALIPAY_APPID = '2021000118687733'
+ALIPAY_DEBUG = True
+# 网关 --- 这两个是固定的
+ALIPAY_URL = 'https://openapi.alipaydev.com/gateway.do'     # 沙箱的测试url
+ALIPAY_RETURN_URL = 'http://www.meiduo.site:8080/pay_success.html'
 
-
-
+APP_PRIVATE_KEY_PATH = os.path.join(BASE_DIR, 'apps/pay/key/app_private_key.pem')
+APP_PUBLIC_KEY_PATH = os.path.join(BASE_DIR, 'apps/pay/key/alipay_public_key.pem')
 
 
 
