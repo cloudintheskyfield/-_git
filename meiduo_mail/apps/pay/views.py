@@ -96,7 +96,94 @@ class PayUrlView(LoginRequiredJSOMixin, View):
         pay_url = settings.ALIPAY_URL + '?' + order_string
         # 7.返回响应
         return JsonResponse({'code': 0, 'errmsg':'ok', 'alipay_url': pay_url})
-        pass
+
+
+"""
+前端：当用户支付完成之后，会跳转到指定商家页面
+    页面中的请求 查询字符串中有支付相关信息
+    前端把这些数据提交给后端就可以了
+    
+后端：
+    请求： 接收数据
+    业务逻辑：查询字符串转换为字典，验证数据，验证没有问题获取支付宝交易流水号,改变订单状态
+    响应：
+    路由：PUT payment/status/
+    步骤：
+        1.接收数据
+        2.查询字符串转换为字典，验证数据，
+        3.验证没有问题获取支付宝交易流水号
+        4.改变订单状态
+        5.返回响应
+"""
+from apps.pay.models import Payment
+class PaymentStatusView(View):
+    def put(self, request):
+        # 1.接收数据
+        data = request.GET
+        # 2.查询字符串转换为字典，验证数据，
+        data = data.dict()
+        # 3.验证没有问题获取支付宝交易流水号
+        signature = data.pop('sign')
+
+        app_private_key_string = open(settings.APP_PRIVATE_KEY_PATH).read()
+        alipay_public_key_string = open(settings.APP_PUBLIC_KEY_PATH).read()
+        # 创建支付宝实例
+        alipay = AliPay(
+            appid=settings.ALIPAY_APPID,
+            app_notify_url=None,  # 默认回调 url
+            app_private_key_string=app_private_key_string,
+            # 支付宝的公钥，验证支付宝回传消息使用，不是你自己的公钥,
+            alipay_public_key_string=alipay_public_key_string,
+            sign_type="RSA2",  # RSA 或者 RSA2
+            debug=settings.ALIPAY_DEBUG,  # 默认 False
+            verbose=False,  # 输出调试数据
+            config=AliPayConfig(timeout=15)  # 可选，请求超时时间
+        )
+        success = alipay.verify(data, signature)
+        # 获取支付宝id
+        if success:
+            # 支付宝的交易流水号
+            trade_no = data.get('trade_no')
+            # 我们的订单号
+            order_id = data.get('out_trade_no')
+            try:
+                Payment.objects.create(
+                    trade_id = trade_no,
+                    order_id= order_id,
+                )
+            except Exception as e:
+                return JsonResponse({'code': 400, 'errmsg': '订单已经存在'})
+            # 4.改变订单状态
+            try:
+                OrderInfo.objects.filter(order_id=order_id).update(status=OrderInfo.ORDER_STATUS_ENUM['UNSEND'])
+            except Exception as e:
+                print(e)
+                return JsonResponse({'code': 400, 'errmsg': '请到个人中心的订单中查询订单状态'})
+            # 5.返回响应
+            return JsonResponse({'code': 0, 'errmsg': 'ok', 'trade_id': trade_no})
+        else:
+            return JsonResponse({'code': 400, 'errmsg': '请到个人中心的订单中查询订单状态'})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
