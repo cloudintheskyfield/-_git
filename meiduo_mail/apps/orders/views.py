@@ -162,6 +162,7 @@ class OrderSettlementView(LoginRequiredJSOMixin, View):
 from apps.orders.models import OrderInfo, OrderGoods
 from django.db import transaction
 
+# 订单的提交
 class OrderCommitView(LoginRequiredJSOMixin, View):
     def post(self, request):
         user = request.user
@@ -205,7 +206,7 @@ class OrderCommitView(LoginRequiredJSOMixin, View):
         total_amount = Decimal('0')  # 总金额
         freight = Decimal('10.00')
 
-        # 使用事务
+        # 使用事务-----------------------------对数据库考试操作前使用事务
         with transaction.atomic():
             point = transaction.savepoint()  # 事务的开始点/回滚点
             # 3.数据入库
@@ -237,48 +238,57 @@ class OrderCommitView(LoginRequiredJSOMixin, View):
 
             # 3.7 根据选中商品的id进行查询
             for sku_id, count in carts.items():
-                sku = SKU.objects.get(id=sku_id)
-                # 3.8 判断库存是否充足,如果不充足，下单失败
-                if sku.stock < count:
+                # 不能直接下单失败，重复几次。 不会不断重复，因为出现 存货不足 会事务回滚 返回响应。
+                for i in range(10):
 
-                    # 回滚点
-                    transaction.savepoint_rollback(point)
+                    sku = SKU.objects.get(id=sku_id)
+                    # 3.8 判断库存是否充足,如果不充足，下单失败
+                    if sku.stock < count:
 
-                    return JsonResponse({'code': 400, 'errmsg': '库存不足'})
+                        # 回滚点
+                        transaction.savepoint_rollback(point)
 
-                # 3.9 否则库存充足
-                ########### 睡眠---并发的模拟 #########
-                from time import sleep
-                sleep(10)
-                ############ 乐观锁 ##############
-                # 1.先记录一个数据 什么数据都可以 参照这个记录
-                old_stock = sku.stock
-                # 2.更新的时候，对比一下记录对不对
-                new_stock = sku.stock - count
-                new_sales = sku.sales + count
-                # 3.如果 库存等于之前的库存
-                result = SKU.objects.filter(id=sku_id, stock=old_stock).update(stock=new_stock, sales=new_sales)
-                # result = 1 表示有1条记录修改成功  result = 0 表示没有更新
-                if result == 0:
-                    # 回滚事务 下单失败
-                    transaction.savepoint_rollback(point)
-                    return JsonResponse({'code': 400, 'errmsg': '下单失败----------'})
+                        return JsonResponse({'code': 400, 'errmsg': '库存不足'})
 
+                    # 3.9 否则库存充足
+                    ########### 睡眠---并发的模拟 #########
+                    from time import sleep
+                    sleep(3)
+                    ############ 乐观锁 ##############
+                    # 1.先记录一个数据 什么数据都可以 参照这个记录
+                    old_stock = sku.stock
+                    # 2.更新的时候，对比一下记录对不对
+                    new_stock = sku.stock - count
+                    new_sales = sku.sales + count
+                    # 3.如果 库存等于之前的库存
+                    result = SKU.objects.filter(id=sku_id, stock=old_stock).update(stock=new_stock, sales=new_sales)
+                    # result = 1 表示有1条记录修改成功  result = 0 表示没有更新
+                    if result == 0:
 
-                # 3.9 如果充足，库存减少，销量增加
-                # sku.stock -= count
-                # sku.sales += count
-                # sku.save()
-                # 5.1 累加总数量和总金额
-                order_info.total_count += count
-                order_info.total_amount += (count * sku.price + freight)
-                # 5.2 保存订单商品信息
-                OrderGoods.objects.create(
-                    order=order_info,
-                    sku=sku,
-                    count=count,
-                    price=sku.price
-                )
+                        # 下单不成功进行重复 每隔5ms再此进行重复，重复十次。为了处理并发情况
+                        sleep(0.005)
+                        continue
+
+                        # 回滚事务 下单失败
+                        # transaction.savepoint_rollback(point)
+                        # return JsonResponse({'code': 400, 'errmsg': '下单失败----------'})
+
+                    # 3.9 如果充足，库存减少，销量增加
+                    # sku.stock -= count
+                    # sku.sales += count
+                    # sku.save()
+                    # 5.1 累加总数量和总金额
+                    order_info.total_count += count
+                    order_info.total_amount += (count * sku.price + freight)
+                    # 5.2 保存订单商品信息
+                    OrderGoods.objects.create(
+                        order=order_info,
+                        sku=sku,
+                        count=count,
+                        price=sku.price
+                    )
+                    # 当没有问题需要跳出循环 否则会显示库存不足
+                    break
             order_info.save()
 
             # 事务的提交点 可以不用写 with语句可以自动提交
