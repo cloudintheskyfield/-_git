@@ -71,8 +71,9 @@ def merge_cookie_to_redis(request, response):
         # 返回respones，类似流水线
         # 6.执行管道
         pipeline.execute()
-        return response
-    pass
+    # 不管response是不是none都要执行
+    return response
+
 
 
 

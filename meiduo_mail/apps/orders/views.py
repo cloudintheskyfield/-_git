@@ -187,8 +187,8 @@ class OrderCommitView(LoginRequiredJSOMixin, View):
         from django.utils import timezone
         from datetime import datetime
         # datetime.strftime() 与下面的效果一样
-        # Year month day Hour Minutes Second %f为毫秒  订单id根据现在的时间来生成+用户id
-        order_id = timezone.localtime().strftime('%Y%m%d%H%M%S') + '%09d' % user.id
+        # Year month day Hour Minutes Second %f为微秒  订单id根据现在的时间来生成+用户id，避免秒杀重复
+        order_id = timezone.localtime().strftime('%Y%m%d%H%M%S%f') + '%09d' % user.id
 
         #     拿取总数量 / 总金额的时候，需要遍历redis拿取数据。在后面遍历的时候改变这两个值！先赋值0
         #     total_count, total_amount, freight
@@ -245,10 +245,30 @@ class OrderCommitView(LoginRequiredJSOMixin, View):
                     transaction.savepoint_rollback(point)
 
                     return JsonResponse({'code': 400, 'errmsg': '库存不足'})
+
+                # 3.9 否则库存充足
+                ########### 睡眠---并发的模拟 #########
+                from time import sleep
+                sleep(10)
+                ############ 乐观锁 ##############
+                # 1.先记录一个数据 什么数据都可以 参照这个记录
+                old_stock = sku.stock
+                # 2.更新的时候，对比一下记录对不对
+                new_stock = sku.stock - count
+                new_sales = sku.sales + count
+                # 3.如果 库存等于之前的库存
+                result = SKU.objects.filter(id=sku_id, stock=old_stock).update(stock=new_stock, sales=new_sales)
+                # result = 1 表示有1条记录修改成功  result = 0 表示没有更新
+                if result == 0:
+                    # 回滚事务 下单失败
+                    transaction.savepoint_rollback(point)
+                    return JsonResponse({'code': 400, 'errmsg': '下单失败----------'})
+
+
                 # 3.9 如果充足，库存减少，销量增加
-                sku.stock -= count
-                sku.sales += count
-                sku.save()
+                # sku.stock -= count
+                # sku.sales += count
+                # sku.save()
                 # 5.1 累加总数量和总金额
                 order_info.total_count += count
                 order_info.total_amount += (count * sku.price + freight)
@@ -267,8 +287,23 @@ class OrderCommitView(LoginRequiredJSOMixin, View):
         # 5.4 将redis中选中的商品信息移除(暂缓）
         # 6.返回响应
         return JsonResponse({'code': 0, 'errmsg': 'ok', 'order_id': order_id})
-        pass
 
+
+"""
+解决并发的超卖问题：
+1.队列
+2.锁
+    悲观锁：当查询某条记录的时候，即让数据库为改记录加锁，锁住记录后别人无法操作
+            悲观锁类似于我们在多线程资源竞争时添加的互斥锁，容易出现死锁现象
+    
+    乐观锁：并不是真的锁，更新数据的时候判断此时的库存是否是之前查询处的库存，如果相同，表示没人修
+            改，可以更新库存，否则表示别人抢夺过资源，不再执行库存更新。
+   
+    乐观锁步骤：
+        1.记录某一个数据 10
+        2.更新的时候，比对一下这个记录对不对 10-->可以操作 9-->不能操作
+
+"""
 
 
 
