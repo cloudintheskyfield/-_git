@@ -106,8 +106,21 @@ DATABASES = {
         'USER': 'root',  # 测试服务器--->不可能由root操作--->删库操作--->只允许操作指定的数据库
         'PASSWORD': 'kingshen2'
 
-    }
+    },
+    'slave': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': 'meiduo_mail',
+            # 不加host就可以访问了
+            'HOST': '192.168.1.6',
+            'PORT': 3308,
+            'USER': 'root',  # 测试服务器--->不可能由root操作--->删库操作--->只允许操作指定的数据库
+            'PASSWORD': 'kingshen2',
+
+
+        }
 }
+# 读写分离的实现
+DATABASE_ROUTERS = ['utils.db_router.MasterSlaveDBRouter']
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
@@ -322,15 +335,15 @@ CRONJOBS = [
 CRONTAB_COMMAND_PREFIX = 'LANG_ALL=zh_cn.UTF-8'
 
 ###################### 支付宝支付相关 ######################
-os.path.join(BASE_DIR, '')
+os.path.join(BASE_DIR, '') # 拼接一个BASE_DIR后面可以使用相对路径
 ALIPAY_APPID = '2021000118687733'
 ALIPAY_DEBUG = True
 # 网关 --- 这两个是固定的
-ALIPAY_URL = 'https://openapi.alipaydev.com/gateway.do'     # 沙箱的测试url
-ALIPAY_RETURN_URL = 'http://www.meiduo.site:8080/pay_success.html'
+ALIPAY_URL = 'https://openapi.alipaydev.com/gateway.do'     # 沙箱的测试url 真正支付的url和这个不一样
+ALIPAY_RETURN_URL = 'http://www.meiduo.site:8080/pay_success.html'  # 支付完成后跳转连接
 
-APP_PRIVATE_KEY_PATH = os.path.join(BASE_DIR, 'apps/pay/key/app_private_key.pem')
-APP_PUBLIC_KEY_PATH = os.path.join(BASE_DIR, 'apps/pay/key/alipay_public_key.pem')
+APP_PRIVATE_KEY_PATH = os.path.join(BASE_DIR, 'apps/pay/key/app_private_key.pem')   # 私钥位置
+APP_PUBLIC_KEY_PATH = os.path.join(BASE_DIR, 'apps/pay/key/alipay_public_key.pem')  # 支付宝公钥位置
 
 
 

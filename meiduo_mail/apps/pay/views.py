@@ -53,26 +53,27 @@ from meiduo_mail import settings
 from alipay import AliPay, AliPayConfig
 
 
+# 生成支付宝跳转的连接
 class PayUrlView(LoginRequiredJSOMixin, View):
     def get(self, request, order_id):
         user = request.user
         # 1.获取订单id
-        # 2.验证订单id（根据订单id查询订单信息）
+        # 2.验证订单id（根据订单id查询订单信息） 尽量查询的精确一些
         try:
             order = OrderInfo.objects.get(order_id=order_id,
                                           status=OrderInfo.ORDER_STATUS_ENUM['UNPAID'],
-                                          user=user)
+                                          user_id=user.id)
         except OrderInfo.DoesNotExist:
             return JsonResponse({'code': 400, 'errmsg': '没有此订单'})
-        # 3.读取应用私钥和支付宝公钥
 
+        # 3.读取应用私钥和支付宝公钥   固定写法
         app_private_key_string = open(settings.APP_PRIVATE_KEY_PATH).read()
         alipay_public_key_string = open(settings.APP_PUBLIC_KEY_PATH).read()
 
-        # 4.创建支付宝实例
+        # 4.创建支付宝实例 固定
         alipay = AliPay(
             appid=settings.ALIPAY_APPID,
-            app_notify_url=None,  # 默认回调 url
+            app_notify_url=None,  # 默认回调 url 为None
             app_private_key_string=app_private_key_string,
             # 支付宝的公钥，验证支付宝回传消息使用，不是你自己的公钥,
             alipay_public_key_string=alipay_public_key_string,
@@ -95,7 +96,7 @@ class PayUrlView(LoginRequiredJSOMixin, View):
         # 6.拼接连接
         pay_url = settings.ALIPAY_URL + '?' + order_string
         # 7.返回响应
-        return JsonResponse({'code': 0, 'errmsg':'ok', 'alipay_url': pay_url})
+        return JsonResponse({'code': 0, 'errmsg': 'ok', 'alipay_url': pay_url})
 
 
 """
@@ -116,6 +117,8 @@ class PayUrlView(LoginRequiredJSOMixin, View):
         5.返回响应
 """
 from apps.pay.models import Payment
+
+# 生成订单表
 class PaymentStatusView(View):
     def put(self, request):
         # 1.接收数据
@@ -125,9 +128,9 @@ class PaymentStatusView(View):
         # 3.验证没有问题获取支付宝交易流水号
         signature = data.pop('sign')
 
+        # 创建支付宝实例
         app_private_key_string = open(settings.APP_PRIVATE_KEY_PATH).read()
         alipay_public_key_string = open(settings.APP_PUBLIC_KEY_PATH).read()
-        # 创建支付宝实例
         alipay = AliPay(
             appid=settings.ALIPAY_APPID,
             app_notify_url=None,  # 默认回调 url
@@ -148,49 +151,21 @@ class PaymentStatusView(View):
             order_id = data.get('out_trade_no')
             try:
                 Payment.objects.create(
-                    trade_id = trade_no,
-                    order_id= order_id,
+                    trade_id=trade_no,
+                    order_id=order_id,
                 )
             except Exception as e:
                 return JsonResponse({'code': 400, 'errmsg': '订单已经存在'})
             # 4.改变订单状态
             try:
+                # 更新方法
                 OrderInfo.objects.filter(order_id=order_id).update(status=OrderInfo.ORDER_STATUS_ENUM['UNSEND'])
             except Exception as e:
                 print(e)
+                # 查询不到相关订单
                 return JsonResponse({'code': 400, 'errmsg': '请到个人中心的订单中查询订单状态'})
             # 5.返回响应
             return JsonResponse({'code': 0, 'errmsg': 'ok', 'trade_id': trade_no})
+        # 支付宝签证失败
         else:
             return JsonResponse({'code': 400, 'errmsg': '请到个人中心的订单中查询订单状态'})
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

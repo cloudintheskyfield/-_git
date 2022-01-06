@@ -12,6 +12,7 @@ from utils.models import BaseModel
 
 class OrderInfo(BaseModel):
     """订单信息"""
+    # 这几个为定义的常量 在视图中使用
     PAY_METHODS_ENUM = {
         "CASH": 1,
         "ALIPAY": 2
@@ -36,11 +37,15 @@ class OrderInfo(BaseModel):
         (6, "已取消"),
     )
     order_id = models.CharField(max_length=64, primary_key=True, verbose_name="订单号")
+    # 关联的用户id 所以此处的uesr为用户的id
     user = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name="下单用户")
+    # 关联的地址id 所以此处的address为地址id
     address = models.ForeignKey(Address, on_delete=models.PROTECT, verbose_name="收货地址")
     total_count = models.IntegerField(default=1, verbose_name="商品总数")
+    # 使用的DecimalField为金钱/货币的领域， freight也是
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="商品总金额")
     freight = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="运费")
+    # SmallIntegerField 小整型 范围相比于IntegerField要小 提升性能
     pay_method = models.SmallIntegerField(choices=PAY_METHOD_CHOICES, default=1, verbose_name="支付方式")
     status = models.SmallIntegerField(choices=ORDER_STATUS_CHOICES, default=1, verbose_name="订单状态")
 
